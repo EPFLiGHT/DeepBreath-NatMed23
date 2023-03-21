@@ -169,7 +169,6 @@ def experiment(config, online=False):
         config = wandb.config
 
         samples_df, data = load_data(config)
-        
 
         for cv_index, (fold_1, fold_2) in enumerate(config.cv_folds):
             print()
