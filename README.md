@@ -19,7 +19,7 @@ Attention plots show a clear alignment between model prediction and independentl
 
 ## Usage
 
-This repository contains the code for training and testing the DeepBreath model on lung auscultation recordings. It includes the data preprocessing and augmentation scripts, the model architecture, training and testing scripts, and the attention plot generation script.
+This repository contains the code for training and testing the DeepBreath model on lung auscultation recordings. It includes the data preprocessing and augmentation scripts, the model architecture, training and testing scripts, and the attention plot generation script. The code was written in Python (version 3.7.4) and relies on several third-party packages, which are listed in the `requirements.txt` file.
 
 ## Installation
 
@@ -75,6 +75,16 @@ To train the DeepBreath model on your own lung auscultation recordings, follow t
         │
         └── visualization  <- Scripts to create exploratory and results oriented visualizations
             └── visualize.py
-
-
 --------
+
+## License
+
+The code in this repository is released under the Apache-2.0 license. See the `LICENSE` file for more details.
+
+## Citation
+
+If you use this code in your research, please cite the following paper: **TODO**.
+
+## Contact
+
+If you have any questions or comments about this code, please contact **TODO**.
