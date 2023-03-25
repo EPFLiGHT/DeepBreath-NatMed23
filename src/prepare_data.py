@@ -6,8 +6,15 @@ import random
 from os import listdir
 from os.path import join
 
-import utils.config as config
 from preprocessing.helpers import prepare_data
+from utils.constants import (
+    SEED,
+    RATE,
+    MAX_DURATION,
+    PATIENT_DF_FILE,
+    SAMPLES_DF_FILE,
+    AUDIO_DATA_FILE,
+)
 
 # Ignore excessive warnings
 import logging
@@ -16,12 +23,12 @@ logging.propagate = False
 logging.getLogger().setLevel(logging.ERROR)
 
 # Set random seeds and deterministic pytorch for reproducibility
-random.seed(config.SEED)  # python random seed
-np.random.seed(config.SEED)  # numpy random seedimport numpy as np
+random.seed(SEED)  # python random seed
+np.random.seed(SEED)  # numpy random seedimport numpy as np
 
 
 def get_samples(patient_df, out_path, audio_array_path, audio_meta_path):
-    sample_length = config.MAX_DURATION * config.RATE
+    sample_length = MAX_DURATION * RATE
 
     audio_dataset = []
     samples_df = []
@@ -35,9 +42,9 @@ def get_samples(patient_df, out_path, audio_array_path, audio_meta_path):
 
         for f in audio_files:
             filename = join(audio_folder, f)
-            samples, sr = librosa.load(filename, sr=None, duration=config.MAX_DURATION)
+            samples, sr = librosa.load(filename, sr=None, duration=MAX_DURATION)
             n_samples = samples.size
-            assert sr == config.RATE
+            assert sr == RATE
 
             # Add sample to dataset
             samples = librosa.util.fix_length(samples, size=sample_length)
@@ -99,12 +106,15 @@ if __name__ == "__main__":
     _download_path = args.download_path
     _out_path = args.out_path
     _interim_path = join(_out_path, "interim")
-    _patient_path = join(_out_path, "processed", config.PATIENT_DF_FILE)
-    _audio_array_path = join(_out_path, "processed", config.AUDIO_DATA_FILE)
-    _audio_meta_path = join(_out_path, "processed", config.SAMPLES_DF_FILE)
+    _patient_path = join(_out_path, "processed", PATIENT_DF_FILE)
+    _audio_array_path = join(_out_path, "processed", AUDIO_DATA_FILE)
+    _audio_meta_path = join(_out_path, "processed", SAMPLES_DF_FILE)
 
     _patient_df = prepare_data(
         _download_path, project_locations, out_path=_interim_path
     )
+    import pdb
+
+    pdb.set_trace()
     _patient_df.to_csv(_patient_path, index=False)
     get_samples(_patient_df, _interim_path, _audio_array_path, _audio_meta_path)

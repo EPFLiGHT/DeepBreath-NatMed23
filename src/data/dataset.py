@@ -2,8 +2,8 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from ..preprocessing.features import AudioFeatures
-from ..utils.config import pre_config, split_config
+from preprocessing.features import AudioFeatures
+from utils.config import pre_config, split_config
 
 
 class AudioDataset(Dataset):

@@ -23,7 +23,7 @@ Project Organization
     │   ├── features       <- 
     │   └── models         <- Trained and serialized models
     │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
+    ├── report             <- Generated analysis as HTML, PDF, LaTeX, etc.
     │   └── figures        <- Generated graphics and figures to be used in reporting
     │
     ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
