@@ -2,8 +2,8 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-import preprocessing.features as feats
-from utils.config import pre_config, split_config
+from ..preprocessing.features import AudioFeatures
+from ..utils.config import pre_config, split_config
 
 
 class AudioDataset(Dataset):
@@ -43,7 +43,7 @@ class AudioDataset(Dataset):
         self._samples_df = df
 
     def _preprocess_data(self, data, preprocessing, pre_config):
-        filters = feats.AudioFeatures(
+        filters = AudioFeatures(
             features=[], preprocessing=preprocessing, pre_config=pre_config
         )
         preprocessed_data = np.zeros(data.shape)

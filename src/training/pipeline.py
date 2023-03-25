@@ -6,9 +6,9 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from data.dataset import AudioDataset
-from data.sampler import BalancedSampler
-from models.SampleModel import SampleModel
+from ..data.dataset import AudioDataset
+from ..data.sampler import BalancedSampler
+from ..models.SampleModel import SampleModel
 
 
 def make_sample_loader(ds, config):

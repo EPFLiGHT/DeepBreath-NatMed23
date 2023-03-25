@@ -1,11 +1,17 @@
 from itertools import combinations
 from os.path import join
 
-import constants
+from .constants import (
+    RATE,
+    MAX_DURATION,
+    PATIENT_DF_FILE,
+    SAMPLES_DF_FILE,
+    AUDIO_DATA_FILE,
+)
 
 
 pre_config = {
-    "sr": constants.RATE,
+    "sr": RATE,
     "freq_highcut": 150,  # 80 100 150  -> Latest: 100
     "order_highcut": 10,
     "freq_lowcut": 800,  # 900 1000 1250  -> Latest: 900
@@ -14,7 +20,7 @@ pre_config = {
 
 feat_config = {
     "transform": "logmel",
-    "sr": constants.RATE,
+    "sr": RATE,
     "n_fft": 256,
     "hop_length": 64,  # 128
     "center": True,
@@ -26,8 +32,8 @@ feat_config = {
 }
 
 split_config = {
-    "sr": constants.RATE,
-    "max_duration": constants.MAX_DURATION,
+    "sr": RATE,
+    "max_duration": MAX_DURATION,
     "pad_audio": False,
     "split_duration": 5,
     "overlap": 0.5,
@@ -59,9 +65,9 @@ pipeline_config = dict(
     pre_config=pre_config,
     feat_config=feat_config,
     split_config=split_config,
-    patient_df_path=join("../data/processed", constants.PATIENT_DF_FILE),
-    samples_df_path=join("../data/processed", constants.SAMPLES_DF_FILE),
-    samples_path=join("../data/processed", constants.AUDIO_DATA_FILE),
+    patient_df_path=join("../data/processed", PATIENT_DF_FILE),
+    samples_df_path=join("../data/processed", SAMPLES_DF_FILE),
+    samples_path=join("../data/processed", AUDIO_DATA_FILE),
     train_loc=["GVA", "POA"],
     stetho=["L"],
     cv_folds=list(combinations(range(5), 2)),

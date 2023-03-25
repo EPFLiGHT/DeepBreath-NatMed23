@@ -4,9 +4,9 @@ import torch.nn.functional as F
 from torchaudio.transforms import Spectrogram, MelSpectrogram, AmplitudeToDB, MFCC
 from torchlibrosa.augmentation import SpecAugmentation
 
-from models.Cnn6 import Cnn6
-from models.Cnn10 import Cnn10
-from models.Cnn10Att import Cnn10Att
+from .Cnn6 import Cnn6
+from .Cnn10 import Cnn10
+from .Cnn10Att import Cnn10Att
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
