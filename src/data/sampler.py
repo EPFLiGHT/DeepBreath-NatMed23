@@ -3,7 +3,7 @@ from torch.utils.data.sampler import BatchSampler, WeightedRandomSampler
 
 
 def balance_weights(weight_a, weight_b, alpha):
-    assert 0 <= alpha <= 1, f'invalid alpha {alpha}, must be 0 <= alpha <= 1'
+    assert 0 <= alpha <= 1, f"invalid alpha {alpha}, must be 0 <= alpha <= 1"
 
     beta = 1 - alpha
     weights = (alpha * weight_a) + (beta * weight_b)
@@ -18,12 +18,13 @@ class BalancedSampler:
 
     def __init__(self, df, pos_label, label_col="diagnosis", additional_cols=[]):
         by = [label_col] + additional_cols
-        grouped_samples = df.reset_index() \
-                            .groupby(by)["index"] \
-                            .agg(["size", list]) \
-                            .reset_index()
+        grouped_samples = (
+            df.reset_index().groupby(by)["index"].agg(["size", list]).reset_index()
+        )
 
-        grouped_samples["original_weight"] = grouped_samples["size"] / grouped_samples["size"].sum()
+        grouped_samples["original_weight"] = (
+            grouped_samples["size"] / grouped_samples["size"].sum()
+        )
 
         pos_indices = (grouped_samples[label_col].isin(pos_label)).values
         n_pos = pos_indices.sum()
@@ -71,15 +72,21 @@ class BalancedSampler:
         sample_rates = weights / class_sizes
         n_batches = n_batches if n_batches is not None else n_samples // batch_size
 
-        print('\n', "Sampling Statistics:")
-        df_to_print = self.grouped_samples.drop(columns=["list", "original_weight", "uniform_weight"])
-        expected_frequencies = (sample_rates * self.grouped_samples["size"])
+        print("\n", "Sampling Statistics:")
+        df_to_print = self.grouped_samples.drop(
+            columns=["list", "original_weight", "uniform_weight"]
+        )
+        expected_frequencies = sample_rates * self.grouped_samples["size"]
         expected_frequencies /= expected_frequencies.sum()
-        df_to_print["expected_samples"] = (n_samples * expected_frequencies).astype(np.int)
+        df_to_print["expected_samples"] = (n_samples * expected_frequencies).astype(
+            np.int
+        )
         df_to_print["expected_frequency"] = expected_frequencies
-        print(df_to_print, '\n')
+        print(df_to_print, "\n")
 
-        return WeightedRandomBatchSampler(sample_rates, class_idxs, batch_size, n_batches)
+        return WeightedRandomBatchSampler(
+            sample_rates, class_idxs, batch_size, n_batches
+        )
 
 
 class WeightedRandomBatchSampler(BatchSampler):
@@ -110,7 +117,9 @@ class WeightedRandomBatchSampler(BatchSampler):
         for c, weight in enumerate(class_weights):
             sample_weights.extend([weight] * len(class_idxs[c]))
 
-        self.sampler = WeightedRandomSampler(sample_weights, batch_size, replacement=True)
+        self.sampler = WeightedRandomSampler(
+            sample_weights, batch_size, replacement=True
+        )
         self.n_batches = n_batches
 
     def __iter__(self):

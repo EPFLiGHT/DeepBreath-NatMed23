@@ -13,7 +13,9 @@ def classification_metrics(samples_df, position_df, verbose=True):
     # 1. Sample Metrics
     sample_labels = samples_df.label.values
     sample_predictions = samples_df.prediction.values
-    sample_report = classification_report(sample_labels, sample_predictions, output_dict=True, zero_division=0)
+    sample_report = classification_report(
+        sample_labels, sample_predictions, output_dict=True, zero_division=0
+    )
     metrics = {f"{t}_sample_recall": sample_report[t]["recall"] for t in str_labels}
     if verbose:
         print("\nSample Classification Report\n")
@@ -46,7 +48,9 @@ def classification_metrics(samples_df, position_df, verbose=True):
 
         patient_predictions = np.array(patient_predictions)
 
-        pos_disease_report = classification_report(diagnoses, patient_predictions, output_dict=True, zero_division=0)
+        pos_disease_report = classification_report(
+            diagnoses, patient_predictions, output_dict=True, zero_division=0
+        )
         # should replace by roc-auc?
 
         pos_recall = []
@@ -64,7 +68,9 @@ def classification_metrics(samples_df, position_df, verbose=True):
         score = hmean([pos_recall, neg_recall])
         pos_score[pos] = score
 
-        to_print.append((pos, ["{:.2f}".format(v) for v in [neg_recall, pos_recall, score]]))
+        to_print.append(
+            (pos, ["{:.2f}".format(v) for v in [neg_recall, pos_recall, score]])
+        )
 
     # 4. ROC-AUC scores: Added
     labels = position_df.label.values
@@ -82,18 +88,30 @@ def classification_metrics(samples_df, position_df, verbose=True):
 
     # 5. print
     if verbose:
-        print("\nHarmonic mean of selected class recalls, selected classes:", selected_diagnoses)
+        print(
+            "\nHarmonic mean of selected class recalls, selected classes:",
+            selected_diagnoses,
+        )
         print("Weighted Class Recalls:")
         row_format = "{:>10}" * (len(str_labels) + 2)
         print(row_format.format("", *(str_labels + ["Score"])))
-        for (pos, ls) in to_print:
+        for pos, ls in to_print:
             print(row_format.format(pos, *ls))
         print()
 
     return metrics, pos_score
 
 
-def train_epoch(model, train_loader, optimizer, criterion, epoch, device, scheduler=None, log_interval=10):
+def train_epoch(
+    model,
+    train_loader,
+    optimizer,
+    criterion,
+    epoch,
+    device,
+    scheduler=None,
+    log_interval=10,
+):
     model.train()
 
     total_batch_loss = 0
@@ -119,9 +137,15 @@ def train_epoch(model, train_loader, optimizer, criterion, epoch, device, schedu
             scheduler.step()
 
         if batch_idx % log_interval == 0:
-            print("Train Epoch: {:3d} [{:6d}/{:6d} ({:.0f}%)]\tLoss: {:.6f}".format(
-                epoch + 1, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+            print(
+                "Train Epoch: {:3d} [{:6d}/{:6d} ({:.0f}%)]\tLoss: {:.6f}".format(
+                    epoch + 1,
+                    batch_idx * len(data),
+                    len(train_loader.dataset),
+                    100.0 * batch_idx / len(train_loader),
+                    loss.item(),
+                )
+            )
 
     train_loss = total_batch_loss / len(train_loader)
     return train_loss
@@ -138,14 +162,16 @@ def evaluate(model, val_loader, criterion, device):
 
     n_classes = len(val_samples_df.label.unique())
 
-    position_df = val_samples_df[["patient", "diagnosis", "position", "label"]].drop_duplicates()
+    position_df = val_samples_df[
+        ["patient", "diagnosis", "position", "label"]
+    ].drop_duplicates()
     output_cols = [f"output_{target}" for target in range(n_classes)]
     for col in output_cols:
-        position_df[col] = 0.
+        position_df[col] = 0.0
     position_df = position_df.set_index(["patient", "position"])
 
     # Added
-    position_df["output"] = 0.
+    position_df["output"] = 0.0
 
     with torch.no_grad():
         for batch_idx, batch_dict in enumerate(val_loader):  # added
@@ -161,7 +187,7 @@ def evaluate(model, val_loader, criterion, device):
 
             # Compute the loss sum up batch loss
             batch_size = data.shape[0]
-            val_loss += (batch_size * criterion(output, target).item())
+            val_loss += batch_size * criterion(output, target).item()
 
             # Add sample predictions: CHANGEME
             # val_samples_df.loc[sample_idx.cpu().numpy(), "prediction"] = output.cpu().numpy().argmax(axis=-1)
@@ -171,13 +197,17 @@ def evaluate(model, val_loader, criterion, device):
             position = val_samples_df.at[sample_idx[0].item(), "position"]
 
             # Added
-            position_df.at[(patient, position), "output"] = pos_output.cpu().numpy()[0, 0]
+            position_df.at[(patient, position), "output"] = pos_output.cpu().numpy()[
+                0, 0
+            ]
 
             # WandB – Log images in your val dataset automatically
             example_spect.append(torch.unsqueeze(data[0], 0))
 
     position_df = position_df.reset_index()
-    metrics, pos_score = classification_metrics(val_samples_df, position_df, verbose=True)
+    metrics, pos_score = classification_metrics(
+        val_samples_df, position_df, verbose=True
+    )
     val_loss = val_loss / len(val_samples_df)
     metrics["Validation Loss"] = val_loss
 

@@ -1,26 +1,20 @@
 from itertools import combinations
 from os.path import join
 
+import constants
 
-SEED = 42
-RATE = 4000
-MAX_DURATION = 30
-
-PATIENT_DF_FILE = "patient_df.csv"
-SAMPLES_DF_FILE = "samples_df.csv"
-AUDIO_DATA_FILE = "audio_data.npy"
 
 pre_config = {
-    "sr": RATE,
+    "sr": constants.RATE,
     "freq_highcut": 150,  # 80 100 150  -> Latest: 100
     "order_highcut": 10,
     "freq_lowcut": 800,  # 900 1000 1250  -> Latest: 900
-    "order_lowcut": 4
+    "order_lowcut": 4,
 }
 
 feat_config = {
     "transform": "logmel",
-    "sr": RATE,
+    "sr": constants.RATE,
     "n_fft": 256,
     "hop_length": 64,  # 128
     "center": True,
@@ -28,16 +22,16 @@ feat_config = {
     "fmin": 250,  # 200 250
     "fmax": 750,  # 750 900 1000  -> Latest: 900
     "n_mfcc": 40,
-    "roll_percent": 0.85
+    "roll_percent": 0.85,
 }
 
 split_config = {
-    "sr": RATE,
-    "max_duration": MAX_DURATION,
+    "sr": constants.RATE,
+    "max_duration": constants.MAX_DURATION,
     "pad_audio": False,
     "split_duration": 5,
     "overlap": 0.5,
-    "center": False
+    "center": False,
 }
 
 network = {
@@ -50,15 +44,12 @@ network = {
     "fc_dropout": 0.5,
     "feat_config": feat_config,
     "time_drop_width": 20,  # changed
-    "freq_drop_width": 4
+    "freq_drop_width": 4,
 }
 
 optimizer = {
     "name": "adamw",  # adamw
-    "parameters": {
-        "lr": 1e-4,  # 1e-4
-        "weight_decay": 0.005  # 0.005
-    }
+    "parameters": {"lr": 1e-4, "weight_decay": 0.005},  # 1e-4  # 0.005
 }
 
 pipeline_config = dict(
@@ -68,11 +59,11 @@ pipeline_config = dict(
     pre_config=pre_config,
     feat_config=feat_config,
     split_config=split_config,
-    patient_df_path=join("../data/processed", PATIENT_DF_FILE),
-    samples_df_path=join("../data/processed", SAMPLES_DF_FILE),
-    samples_path=join("../data/processed", AUDIO_DATA_FILE),
-    train_loc=['GVA', 'POA'],
-    stetho=['L'],
+    patient_df_path=join("../data/processed", constants.PATIENT_DF_FILE),
+    samples_df_path=join("../data/processed", constants.SAMPLES_DF_FILE),
+    samples_path=join("../data/processed", constants.AUDIO_DATA_FILE),
+    train_loc=["GVA", "POA"],
+    stetho=["L"],
     cv_folds=list(combinations(range(5), 2)),
     epochs=100,
     validation_start=60,
@@ -88,5 +79,5 @@ pipeline_config = dict(
     output_file="{}_outputs_D{}_V{}_T{}.npy",
     attn_file="{}_attn_D{}_V{}_T{}.npy",
     aggregate_file="{}_agg_D{}_V{}_T{}.csv",
-    save_outputs=False
+    save_outputs=False,
 )

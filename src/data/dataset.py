@@ -3,15 +3,23 @@ import torch
 from torch.utils.data import Dataset
 
 import preprocessing.features as feats
-from config import pre_config, split_config
+from utils.config import pre_config, split_config
 
 
 class AudioDataset(Dataset):
-
-    def __init__(self, samples_df, target, data, preprocessing=["highpass"],
-                 pre_config=pre_config, split_config=split_config, train=True):
-
-        self.samples_df = samples_df.reset_index().rename(columns={"index": "old_index"})
+    def __init__(
+        self,
+        samples_df,
+        target,
+        data,
+        preprocessing=["highpass"],
+        pre_config=pre_config,
+        split_config=split_config,
+        train=True,
+    ):
+        self.samples_df = samples_df.reset_index().rename(
+            columns={"index": "old_index"}
+        )
         self.data = self._preprocess_data(data, preprocessing, pre_config)
 
         labels = (self.samples_df.diagnosis.isin(target)).values.astype(int)
@@ -35,7 +43,9 @@ class AudioDataset(Dataset):
         self._samples_df = df
 
     def _preprocess_data(self, data, preprocessing, pre_config):
-        filters = feats.AudioFeatures(features=[], preprocessing=preprocessing, pre_config=pre_config)
+        filters = feats.AudioFeatures(
+            features=[], preprocessing=preprocessing, pre_config=pre_config
+        )
         preprocessed_data = np.zeros(data.shape)
         for i, n_samples in enumerate(self.samples_df.end.values):
             audio = data[i][:n_samples]
@@ -53,29 +63,38 @@ class AudioDataset(Dataset):
     def __getitem__(self, i):
         y = np.array([self.samples_df["label"].values[i]]).astype(np.float32)
 
-        sample_length = int(self.split_config["sr"] * self.split_config["split_duration"])
+        sample_length = int(
+            self.split_config["sr"] * self.split_config["split_duration"]
+        )
         n_samples = self.samples_df.iloc[i].end
         audio = self.data[i][:n_samples]
         if self.train:
             if n_samples < sample_length:
                 new_audio = np.zeros(sample_length, dtype=audio.dtype)
                 random_start = np.random.choice(sample_length - n_samples)
-                new_audio[random_start:(random_start + n_samples)] = audio
+                new_audio[random_start : (random_start + n_samples)] = audio
                 audio = new_audio
             else:
                 end_idx = n_samples - sample_length
                 random_start = np.random.choice(end_idx)
-                audio = audio[random_start:(random_start + sample_length)]
+                audio = audio[random_start : (random_start + sample_length)]
         else:
             # Added to evaluate the impact of recording duration on classification performance
-            max_samples = int(self.split_config["sr"] * self.split_config["max_duration"])
+            max_samples = int(
+                self.split_config["sr"] * self.split_config["max_duration"]
+            )
             if n_samples > max_samples:
                 audio = audio[:max_samples]
 
             if i == 0:
-                print('#'*10, "INFO", '#'*10)
+                print("#" * 10, "INFO", "#" * 10)
                 print("Number of samples:", n_samples)
-                print("Max Duration:", self.split_config["max_duration"], "- Max Samples:", max_samples)
+                print(
+                    "Max Duration:",
+                    self.split_config["max_duration"],
+                    "- Max Samples:",
+                    max_samples,
+                )
                 print("Final number of samples:", len(audio))
                 print("Head:", audio[:5])
                 print("Tail:", audio[-5:])
@@ -86,7 +105,7 @@ class AudioDataset(Dataset):
         batch_dict = {
             "sample_idx": torch.from_numpy(np.array(i)),
             "data": torch.from_numpy(x),
-            "target": torch.from_numpy(y)
+            "target": torch.from_numpy(y),
         }
 
         return batch_dict

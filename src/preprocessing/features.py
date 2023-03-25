@@ -3,7 +3,7 @@ import librosa.display
 import numpy as np
 from scipy import signal
 
-from config import pre_config, feat_config
+from utils.config import pre_config, feat_config
 
 
 def read_audio(filename, offset=0.0, duration=None, config=feat_config):
@@ -19,11 +19,12 @@ def get_duration(samples, config=feat_config):
 
 # ---------- Pre-processing ---------- #
 
+
 # Lowpass filter
 def butter_lowpass(config):
     nyq = 0.5 * config["sr"]
     low = config["freq_lowcut"] / nyq
-    b, a = signal.butter(config["order_lowcut"], low, btype='low')
+    b, a = signal.butter(config["order_lowcut"], low, btype="low")
     return b, a
 
 
@@ -37,7 +38,7 @@ def lowpass_filter(samples, config=pre_config):
 def butter_highpass(config):
     nyq = 0.5 * config["sr"]
     high = config["freq_highcut"] / nyq
-    b, a = signal.butter(config["order_highcut"], high, btype='high')
+    b, a = signal.butter(config["order_highcut"], high, btype="high")
     return b, a
 
 
@@ -52,7 +53,9 @@ def butter_bandpass(config):
     nyq = 0.5 * config["sr"]
     low = config["freq_lowcut"] / nyq
     high = config["freq_highcut"] / nyq
-    b, a = signal.butter(min(config["order_lowcut"], config["order_highcut"]), [low, high], btype='band')
+    b, a = signal.butter(
+        min(config["order_lowcut"], config["order_highcut"]), [low, high], btype="band"
+    )
     return b, a
 
 
@@ -64,12 +67,13 @@ def bandpass_filter(samples, config=pre_config):
 
 # ---------- Audio Features ---------- #
 
+
 def compute_stft(samples, config=feat_config):
     stft = librosa.stft(
         samples,
         n_fft=config["n_fft"],
         hop_length=config["hop_length"],
-        center=config["center"]
+        center=config["center"],
     )
     S = np.abs(stft)
 
@@ -97,7 +101,7 @@ def compute_mel_spectrogram(samples, config=feat_config):
         center=config["center"],
         n_mels=config["n_mels"],
         fmin=config["fmin"],
-        fmax=config["fmax"]
+        fmax=config["fmax"],
     )
     return melspect
 
@@ -123,7 +127,7 @@ def compute_mfcc(samples, config=feat_config):
         n_mels=config["n_mels"],
         fmin=config["fmin"],
         fmax=config["fmax"],
-        n_mfcc=config["n_mfcc"]
+        n_mfcc=config["n_mfcc"],
     )
     return mfccs
 
@@ -146,29 +150,52 @@ def compute_delta2(samples, config=feat_config):
 
 
 def compute_zcr(samples, config=feat_config):
-    return librosa.feature.zero_crossing_rate(samples, frame_length=config["n_fft"], hop_length=config["hop_length"])
+    return librosa.feature.zero_crossing_rate(
+        samples, frame_length=config["n_fft"], hop_length=config["hop_length"]
+    )
 
 
 def compute_spectral_centroid(samples, config=feat_config):
-    return librosa.feature.spectral_centroid(samples, sr=config["sr"], n_fft=config["n_fft"],
-                                             hop_length=config["hop_length"])
+    return librosa.feature.spectral_centroid(
+        samples, sr=config["sr"], n_fft=config["n_fft"], hop_length=config["hop_length"]
+    )
 
 
 def compute_spectral_rolloff(samples, config=feat_config):
-    return librosa.feature.spectral_rolloff(samples, sr=config["sr"], n_fft=config["n_fft"],
-                                            hop_length=config["hop_length"], roll_percent=config["roll_percent"])
+    return librosa.feature.spectral_rolloff(
+        samples,
+        sr=config["sr"],
+        n_fft=config["n_fft"],
+        hop_length=config["hop_length"],
+        roll_percent=config["roll_percent"],
+    )
 
 
 # ---------- Feature Pipeline ---------- #
 
-preprocessing_fcts = {"lowpass": lowpass_filter, "highpass": highpass_filter, "bandpass": bandpass_filter}
-feature_fcts = {"stft": compute_stft, "stftw": compute_stft_windowed, "mel": compute_mel_spectrogram,
-                "logmel": compute_logmel, "mfcc": compute_mfcc, "delta1": compute_delta1, "delta2": compute_delta2,
-                "zcr": compute_zcr, "centroid": compute_spectral_centroid, "rolloff": compute_spectral_rolloff}
+preprocessing_fcts = {
+    "lowpass": lowpass_filter,
+    "highpass": highpass_filter,
+    "bandpass": bandpass_filter,
+}
+feature_fcts = {
+    "stft": compute_stft,
+    "stftw": compute_stft_windowed,
+    "mel": compute_mel_spectrogram,
+    "logmel": compute_logmel,
+    "mfcc": compute_mfcc,
+    "delta1": compute_delta1,
+    "delta2": compute_delta2,
+    "zcr": compute_zcr,
+    "centroid": compute_spectral_centroid,
+    "rolloff": compute_spectral_rolloff,
+}
 
 
 class AudioFeatures:
-    def __init__(self, features, preprocessing=[], pre_config=pre_config, feat_config=feat_config):
+    def __init__(
+        self, features, preprocessing=[], pre_config=pre_config, feat_config=feat_config
+    ):
         for pre in preprocessing:
             assert pre in preprocessing_fcts.keys()
         for feat in features:
@@ -186,7 +213,9 @@ class AudioFeatures:
 
         output = x
         if self.features:
-            output = [feature_fcts[feat](x, config=self.feat_config) for feat in self.features]  # added
+            output = [
+                feature_fcts[feat](x, config=self.feat_config) for feat in self.features
+            ]  # added
 
         if time_first:
             output = [out.T for out in output]
