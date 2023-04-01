@@ -3,7 +3,7 @@ import librosa.display
 import numpy as np
 from scipy import signal
 
-from utils.config import pre_config, feat_config
+from ..utils.config import pre_config, feat_config
 
 
 def read_audio(filename, offset=0.0, duration=None, config=feat_config):
@@ -94,7 +94,7 @@ def compute_stft_windowed(samples, config=feat_config):
 
 def compute_mel_spectrogram(samples, config=feat_config):
     melspect = librosa.feature.melspectrogram(
-        samples,
+        y=samples,
         sr=config["sr"],
         n_fft=config["n_fft"],
         hop_length=config["hop_length"],
@@ -119,7 +119,7 @@ def compute_logmel(samples, config=feat_config):
 
 def compute_mfcc(samples, config=feat_config):
     mfccs = librosa.feature.mfcc(
-        samples,
+        y=samples,
         sr=config["sr"],
         n_fft=config["n_fft"],
         hop_length=config["hop_length"],
@@ -151,19 +151,19 @@ def compute_delta2(samples, config=feat_config):
 
 def compute_zcr(samples, config=feat_config):
     return librosa.feature.zero_crossing_rate(
-        samples, frame_length=config["n_fft"], hop_length=config["hop_length"]
+        y=samples, frame_length=config["n_fft"], hop_length=config["hop_length"]
     )
 
 
 def compute_spectral_centroid(samples, config=feat_config):
     return librosa.feature.spectral_centroid(
-        samples, sr=config["sr"], n_fft=config["n_fft"], hop_length=config["hop_length"]
+        y=samples, sr=config["sr"], n_fft=config["n_fft"], hop_length=config["hop_length"]
     )
 
 
 def compute_spectral_rolloff(samples, config=feat_config):
     return librosa.feature.spectral_rolloff(
-        samples,
+        y=samples,
         sr=config["sr"],
         n_fft=config["n_fft"],
         hop_length=config["hop_length"],

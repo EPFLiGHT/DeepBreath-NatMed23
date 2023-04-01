@@ -61,30 +61,42 @@ To train the DeepBreath model on your own lung auscultation recordings, follow t
     ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
     │                         generated with `pip freeze > requirements.txt`
     │
-    ├── src                <- Source code for use in this project.
-        ├── data           <- Scripts to download or generate data
-        │   └── make_dataset.py
+    └── src                <- Source code for use in this project.
+        ├── data
+        │   ├── dataset.py
+        │   └── sampler.py
         │
-        ├── features       <- Scripts to turn raw data into features for modeling
-        │   └── build_features.py
+        ├── models
+        │   ├── Cnn10Att.py
+        │   ├── Cnn10.py
+        │   ├── Cnn6.py
+        │   └── SampleModel.py
         │
-        ├── models         <- Scripts to train models and then use trained models to make
-        │   │                 predictions
-        │   ├── predict_model.py
-        │   └── train_model.py
+        ├── prepare_data.py
         │
-        └── visualization  <- Scripts to create exploratory and results oriented visualizations
-            └── visualize.py
+        ├── preprocessing
+        │   ├── features.py
+        │   └── helpers.py
+        │
+        ├── train_audio_classifier.py
+        │
+        ├── training
+        │   ├── pipeline.py
+        │   └── sample_fit.py
+        │
+        └── utils
+           ├── config.py
+           └── constants.py
 --------
 
 ## License
 
 The code in this repository is released under the Apache-2.0 license. See the `LICENSE` file for more details.
 
-## Citation
-
-If you use this code in your research, please cite the following paper: **TODO**.
-
 ## Contact
 
 If you have any questions or comments about this code, please contact **TODO**.
+
+## Citation
+
+If you use this code in your research, please cite the following paper: **TODO**.
