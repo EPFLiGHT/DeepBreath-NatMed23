@@ -78,6 +78,7 @@ target/
 # exclude data and output from source control by default
 /data/
 /out/
+/report/
 /notebooks/out/
 
 # Mac OS-specific storage files

@@ -3,7 +3,7 @@ import librosa.display
 import numpy as np
 from scipy import signal
 
-from ..utils.config import pre_config, feat_config
+from utils.config import pre_config, feat_config
 
 
 def read_audio(filename, offset=0.0, duration=None, config=feat_config):
