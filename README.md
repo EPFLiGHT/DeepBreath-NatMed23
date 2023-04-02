@@ -1,7 +1,7 @@
 <p align="center" style="display:flex; justify-content:space-between; width:100%;">
-    <a href="https://www.epfl.ch"><img src="assets/epfl_logo.png" alt="EPFL" style="height:100px; object-fit:cover;"></a>
-    <a href="https://www.hug.ch/"><img src="assets/hug_logo.png" alt="HUG" style="height:100px; object-fit:cover;"></a>
-    <a href="https://www.epfl.ch/labs/mlo/igh-intelligent-global-health/"><img src="assets/igh_logo.png" alt="iGH" style="height:100px; object-fit:cover;"></a>
+    <a href="https://www.epfl.ch"><img src="assets/epfl_logo.png" alt="EPFL" style="height:90px; object-fit:cover;"></a>
+    <a href="https://www.hug.ch/"><img src="assets/hug_logo.png" alt="HUG" style="height:90px; object-fit:cover;"></a>
+    <a href="https://www.epfl.ch/labs/mlo/igh-intelligent-global-health/"><img src="assets/igh_logo.png" alt="iGH" style="height:90px; object-fit:cover;"></a>
 </p>
 
 
