@@ -157,7 +157,10 @@ def compute_zcr(samples, config=feat_config):
 
 def compute_spectral_centroid(samples, config=feat_config):
     return librosa.feature.spectral_centroid(
-        y=samples, sr=config["sr"], n_fft=config["n_fft"], hop_length=config["hop_length"]
+        y=samples,
+        sr=config["sr"],
+        n_fft=config["n_fft"],
+        hop_length=config["hop_length"],
     )
 
 

@@ -1,7 +1,15 @@
-![HEADER](./assets/banner.png)
+
+<p align="center" width="100%">
+<img src="assets/logo.png" alt="DeepBreath" style="width: 90%; min-width: 300px; display: block; margin: auto;"></a>
+</p>
 
 DeepBreath-NatMed23
 ==============================
+
+[![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](https://github.com/tatsu-lab/stanford_alpaca/blob/main/LICENSE)
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-370/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 
 Lung auscultation is an essential clinical exam in the evaluation of respiratory diseases, but it is subjective and relies on non-specific nomenclature. Computer-aided analysis has the potential to standardize and automate evaluation, making it more accessible to low-resource and remote care settings. In this repository, we present DeepBreath, a deep learning model that recognizes audible signatures of pediatric respiratory diseases.
 
@@ -32,7 +40,7 @@ The lung auscultation recordings used to train and test the DeepBreath model are
 
 ## Training
 
-To train the DeepBreath model on your own lung auscultation recordings, follow these steps:
+To train the DeepBreath model on your own lung auscultation recordings, move to the `src/` folder and follow these steps:
 
    3. Preprocess and augment the data using the `prepare_data.py` script
    4. Train the model using the `train_audio_classifier.py` script
