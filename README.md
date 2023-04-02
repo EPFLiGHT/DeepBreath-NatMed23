@@ -1,6 +1,6 @@
 
 <p align="center" width="100%">
-<img src="assets/logo.png" alt="DeepBreath" style="width: 90%; min-width: 300px; display: block; margin: auto;"></a>
+<img src="assets/logo.png" alt="DeepBreath" style="width: 100%; min-width: 300px; display: block; margin: auto;"></a>
 </p>
 
 DeepBreath-NatMed23
