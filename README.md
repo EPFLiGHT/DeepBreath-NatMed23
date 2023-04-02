@@ -1,7 +1,9 @@
-
-<p align="center" width="100%">
-<img src="assets/logo.png" alt="DeepBreath" style="width: 100%; min-width: 300px; display: block; margin: auto;"></a>
+<p align="center" style="display:flex; justify-content:space-between; width:100%;">
+    <a href="https://www.epfl.ch"><img src="assets/epfl_logo.png" alt="EPFL" style="height:120px; object-fit:cover;"></a>
+    <a href="https://www.hug.ch/"><img src="assets/hug_logo.png" alt="HUG" style="height:120px; object-fit:cover;"></a>
+    <a href="https://www.epfl.ch/labs/mlo/igh-intelligent-global-health/"><img src="assets/igh_logo.png" alt="iGH" style="height:120px; object-fit:cover;"></a>
 </p>
+
 
 DeepBreath-NatMed23
 ==============================
