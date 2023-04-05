@@ -72,13 +72,13 @@ def get_samples(
 
 
 def main():
-    parser = HfArgumentParser((AudioArguments, DataArguments))
+    parser = HfArgumentParser((DataArguments, AudioArguments))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        audio_args, data_args = parser.parse_json_file(
+        data_args, audio_args = parser.parse_json_file(
             json_file=os.path.abspath(sys.argv[1])
         )
     else:
-        audio_args, data_args = parser.parse_args_into_dataclasses()
+        data_args, audio_args = parser.parse_args_into_dataclasses()
 
     sr, max_duration = audio_args.sr, audio_args.max_duration
     # import pdb; pdb.set_trace()

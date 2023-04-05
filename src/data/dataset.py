@@ -1,3 +1,4 @@
+import dataclasses
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -11,10 +12,10 @@ class AudioDataset(Dataset):
         samples_df,
         target,
         data,
-        config,
+        audio_args,
         train=True,
     ):
-        self.config = config
+        self.audio_args = audio_args
 
         self.samples_df = samples_df.reset_index().rename(
             columns={"index": "old_index"}
@@ -41,7 +42,7 @@ class AudioDataset(Dataset):
         self._samples_df = df
 
     def _preprocess_data(self, data):
-        filters = AudioFeatures(features=[], config=self.config)
+        filters = AudioFeatures(features=[], config=dataclasses.asdict(self.audio_args))
         preprocessed_data = np.zeros(data.shape)
         for i, n_samples in enumerate(self.samples_df.end.values):
             audio = data[i][:n_samples]
@@ -59,7 +60,7 @@ class AudioDataset(Dataset):
     def __getitem__(self, i):
         y = np.array([self.samples_df["label"].values[i]]).astype(np.float32)
 
-        sample_length = int(self.config["sr"] * self.config["split_duration"])
+        sample_length = int(self.audio_args.sr * self.audio_args.split_duration)
         n_samples = self.samples_df.iloc[i].end
         audio = self.data[i][:n_samples]
         if self.train:
@@ -74,7 +75,7 @@ class AudioDataset(Dataset):
                 audio = audio[random_start : (random_start + sample_length)]
         else:
             # Added to evaluate the impact of recording duration on classification performance
-            max_samples = int(self.config["sr"] * self.config["max_duration"])
+            max_samples = int(self.audio_args.sr * self.audio_args.max_duration)
             if n_samples > max_samples:
                 audio = audio[:max_samples]
 
@@ -83,7 +84,7 @@ class AudioDataset(Dataset):
                 print("Number of samples:", n_samples)
                 print(
                     "Max Duration:",
-                    self.config["max_duration"],
+                    self.audio_args.max_duration,
                     "- Max Samples:",
                     max_samples,
                 )

@@ -1,7 +1,7 @@
-import argparse
 import logging
+import os
 import random
-from os.path import join
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -9,13 +9,20 @@ import pandas as pd
 import torch
 import wandb
 from torch.utils.data import DataLoader
+from transformers import HfArgumentParser
 
 # Local imports
 import training.pipeline as pipeline
 import training.sample_fit as sample_fit
 from data.dataset import AudioDataset
-from utils.config import pipeline_config
+from utils.arguments import (
+    DataArguments,
+    AudioArguments,
+    ModelArguments,
+    TrainingArguments,
+)
 from utils.constants import SEED, UNKNOWN_DIAGNOSES
+
 
 # Ignore excessive warnings
 logging.propagate = False
@@ -47,9 +54,9 @@ def position_aggregation(samples_df, data_loader, val_fold, test_fold, config, d
         columns={"output": f"output_{target_str}"}
     )
 
-    out_dir = join(config.out_folder, "aggregate")
+    out_dir = os.path.join(config.out_folder, "aggregate")
     Path(out_dir).mkdir(parents=True, exist_ok=True)
-    out_path = join(
+    out_path = os.path.join(
         out_dir,
         config.aggregate_file.format(
             config.network["feature_model"], target_str, val_fold, test_fold
@@ -89,9 +96,9 @@ def evaluate_and_save(
         best_score = avg_score
         print(f"Best overall model ({val_fold}-{test_fold})\n")
         target_str = "+".join([str(t) for t in config.target])
-        out_dir = join(config.out_folder, "models")
+        out_dir = os.path.join(config.out_folder, "models")
         Path(out_dir).mkdir(parents=True, exist_ok=True)
-        model_path = join(
+        model_path = os.path.join(
             out_dir,
             config.model_file.format(
                 config.network["feature_model"], target_str, val_fold, test_fold
@@ -271,9 +278,9 @@ def experiment(config, online=False):
             print()
 
 
-if __name__ == "__main__":
+def main():
     # Defines all parser arguments when launching the script directly in terminal
-    parser = argparse.ArgumentParser()
+    """parser = argparse.ArgumentParser()
     parser.add_argument(
         "target_list", type=int, nargs="+", help="Diagnosis code(s) of target class"
     )
@@ -283,9 +290,23 @@ if __name__ == "__main__":
         help="Skip model training, use saved models to produce features",
         action="store_true",
     )
-    args = parser.parse_args()
+    args = parser.parse_args()"""
+
+    parser = HfArgumentParser(
+        (DataArguments, AudioArguments, ModelArguments, TrainingArguments)
+    )
+    if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
+        data_args, audio_args, model_args, train_args = parser.parse_json_file(
+            json_file=os.path.abspath(sys.argv[1])
+        )
+    else:
+        data_args, audio_args = parser.parse_args_into_dataclasses()
 
     no_fit = args.no_fit
     pipeline_config["target"] = args.target_list
 
     experiment(pipeline_config)
+    
+
+if __name__ == "__main__":
+    main()
