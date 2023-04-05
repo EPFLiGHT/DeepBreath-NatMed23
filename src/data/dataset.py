@@ -3,7 +3,6 @@ import torch
 from torch.utils.data import Dataset
 
 from preprocessing.features import AudioFeatures
-from utils.config import pre_config, split_config
 
 
 class AudioDataset(Dataset):
@@ -12,15 +11,15 @@ class AudioDataset(Dataset):
         samples_df,
         target,
         data,
-        preprocessing=["highpass"],
-        pre_config=pre_config,
-        split_config=split_config,
+        config,
         train=True,
     ):
+        self.config = config
+
         self.samples_df = samples_df.reset_index().rename(
             columns={"index": "old_index"}
         )
-        self.data = self._preprocess_data(data, preprocessing, pre_config)
+        self.data = self._preprocess_data(data)
 
         labels = (self.samples_df.diagnosis.isin(target)).values.astype(int)
         self.samples_df["label"] = labels
@@ -31,7 +30,6 @@ class AudioDataset(Dataset):
         locations = sorted(self.samples_df.location.unique())
         self.location_code = {loc: i for i, loc in enumerate(locations)}
 
-        self.split_config = split_config
         self.train = train
 
     @property
@@ -42,10 +40,8 @@ class AudioDataset(Dataset):
     def samples_df(self, df):
         self._samples_df = df
 
-    def _preprocess_data(self, data, preprocessing, pre_config):
-        filters = AudioFeatures(
-            features=[], preprocessing=preprocessing, pre_config=pre_config
-        )
+    def _preprocess_data(self, data):
+        filters = AudioFeatures(features=[], config=self.config)
         preprocessed_data = np.zeros(data.shape)
         for i, n_samples in enumerate(self.samples_df.end.values):
             audio = data[i][:n_samples]
@@ -63,9 +59,7 @@ class AudioDataset(Dataset):
     def __getitem__(self, i):
         y = np.array([self.samples_df["label"].values[i]]).astype(np.float32)
 
-        sample_length = int(
-            self.split_config["sr"] * self.split_config["split_duration"]
-        )
+        sample_length = int(self.config.sr * self.config.split_duration)
         n_samples = self.samples_df.iloc[i].end
         audio = self.data[i][:n_samples]
         if self.train:
@@ -80,9 +74,7 @@ class AudioDataset(Dataset):
                 audio = audio[random_start : (random_start + sample_length)]
         else:
             # Added to evaluate the impact of recording duration on classification performance
-            max_samples = int(
-                self.split_config["sr"] * self.split_config["max_duration"]
-            )
+            max_samples = int(self.config.sr * self.config.max_duration)
             if n_samples > max_samples:
                 audio = audio[:max_samples]
 
@@ -91,7 +83,7 @@ class AudioDataset(Dataset):
                 print("Number of samples:", n_samples)
                 print(
                     "Max Duration:",
-                    self.split_config["max_duration"],
+                    self.config.max_duration,
                     "- Max Samples:",
                     max_samples,
                 )

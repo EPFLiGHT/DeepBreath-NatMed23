@@ -60,7 +60,6 @@ optimizer = {
 
 pipeline_config = dict(
     preprocessing=["highpass", "lowpass"],
-    augment=False,
     features=["logmel"],
     pre_config=pre_config,
     feat_config=feat_config,
@@ -69,7 +68,6 @@ pipeline_config = dict(
     samples_df_path=join("../data/processed", SAMPLES_DF_FILE),
     samples_path=join("../data/processed", AUDIO_DATA_FILE),
     train_loc=["GVA", "POA"],
-    stetho=["L"],
     cv_folds=list(combinations(range(5), 2)),
     epochs=100,
     validation_start=60,

@@ -196,28 +196,25 @@ feature_fcts = {
 
 
 class AudioFeatures:
-    def __init__(
-        self, features, preprocessing=[], pre_config=pre_config, feat_config=feat_config
-    ):
-        for pre in preprocessing:
+    def __init__(self, features, config):
+        for pre in config.preprocessing:
             assert pre in preprocessing_fcts.keys()
         for feat in features:
             assert feat in feature_fcts.keys()
 
-        self.preprocessing = preprocessing
+        self.preprocessing = config.preprocessing
         self.features = features
-        self.pre_config = pre_config
-        self.feat_config = feat_config
+        self.config = config
 
     def transform(self, samples, time_first=False):
         x = samples
         for pre in self.preprocessing:
-            x = preprocessing_fcts[pre](x, config=self.pre_config)
+            x = preprocessing_fcts[pre](x, config=self.config)
 
         output = x
         if self.features:
             output = [
-                feature_fcts[feat](x, config=self.feat_config) for feat in self.features
+                feature_fcts[feat](x, config=self.config) for feat in self.features
             ]  # added
 
         if time_first:
