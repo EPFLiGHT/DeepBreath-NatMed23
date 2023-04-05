@@ -137,6 +137,16 @@ class AudioArguments:
         metadata={"help": ("TODO")},
     )
 
+    time_drop_width: int = field(
+        default=20,
+        metadata={"help": ("TODO")},
+    )
+
+    freq_drop_width: int = field(
+        default=4,
+        metadata={"help": ("TODO")},
+    )
+
 
 @dataclass
 class ModelArguments:
@@ -166,16 +176,6 @@ class ModelArguments:
 
     fc_dropout: float = field(
         default=0.2,
-        metadata={"help": ("TODO")},
-    )
-
-    time_drop_width: int = field(
-        default=20,
-        metadata={"help": ("TODO")},
-    )
-
-    freq_drop_width: int = field(
-        default=4,
         metadata={"help": ("TODO")},
     )
 

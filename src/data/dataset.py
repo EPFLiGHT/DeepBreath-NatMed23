@@ -59,7 +59,7 @@ class AudioDataset(Dataset):
     def __getitem__(self, i):
         y = np.array([self.samples_df["label"].values[i]]).astype(np.float32)
 
-        sample_length = int(self.config.sr * self.config.split_duration)
+        sample_length = int(self.config["sr"] * self.config["split_duration"])
         n_samples = self.samples_df.iloc[i].end
         audio = self.data[i][:n_samples]
         if self.train:
@@ -74,7 +74,7 @@ class AudioDataset(Dataset):
                 audio = audio[random_start : (random_start + sample_length)]
         else:
             # Added to evaluate the impact of recording duration on classification performance
-            max_samples = int(self.config.sr * self.config.max_duration)
+            max_samples = int(self.config["sr"] * self.config["max_duration"])
             if n_samples > max_samples:
                 audio = audio[:max_samples]
 
@@ -83,7 +83,7 @@ class AudioDataset(Dataset):
                 print("Number of samples:", n_samples)
                 print(
                     "Max Duration:",
-                    self.config.max_duration,
+                    self.config["max_duration"],
                     "- Max Samples:",
                     max_samples,
                 )

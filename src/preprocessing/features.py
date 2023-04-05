@@ -3,16 +3,13 @@ import librosa.display
 import numpy as np
 from scipy import signal
 
-from utils.config import pre_config, feat_config
 
-
-def read_audio(filename, offset=0.0, duration=None, config=feat_config):
+def read_audio(filename, offset=0.0, duration=None):
     samples, sr = librosa.load(filename, sr=None, offset=offset, duration=duration)
-    assert sr == config["sr"]
     return samples
 
 
-def get_duration(samples, config=feat_config):
+def get_duration(samples, config):
     duration = librosa.get_duration(y=samples, sr=config["sr"])
     return duration
 
@@ -28,7 +25,7 @@ def butter_lowpass(config):
     return b, a
 
 
-def lowpass_filter(samples, config=pre_config):
+def lowpass_filter(samples, config):
     b, a = butter_lowpass(config)
     samples_filtered = signal.lfilter(b, a, samples)
     return samples_filtered
@@ -42,7 +39,7 @@ def butter_highpass(config):
     return b, a
 
 
-def highpass_filter(samples, config=pre_config):
+def highpass_filter(samples, config):
     b, a = butter_highpass(config)
     samples_filtered = signal.lfilter(b, a, samples)
     return samples_filtered
@@ -59,7 +56,7 @@ def butter_bandpass(config):
     return b, a
 
 
-def bandpass_filter(samples, config=pre_config):
+def bandpass_filter(samples, config):
     b, a = butter_bandpass(config)
     samples_filtered = signal.lfilter(b, a, samples)
     return samples_filtered
@@ -68,7 +65,7 @@ def bandpass_filter(samples, config=pre_config):
 # ---------- Audio Features ---------- #
 
 
-def compute_stft(samples, config=feat_config):
+def compute_stft(samples, config):
     stft = librosa.stft(
         samples,
         n_fft=config["n_fft"],
@@ -80,7 +77,7 @@ def compute_stft(samples, config=feat_config):
     return S
 
 
-def compute_stft_windowed(samples, config=feat_config):
+def compute_stft_windowed(samples, config):
     S = compute_stft(samples, config)
 
     res = config["sr"] / (2 * S.shape[0])
@@ -92,7 +89,7 @@ def compute_stft_windowed(samples, config=feat_config):
     return S
 
 
-def compute_mel_spectrogram(samples, config=feat_config):
+def compute_mel_spectrogram(samples, config):
     melspect = librosa.feature.melspectrogram(
         y=samples,
         sr=config["sr"],
@@ -111,13 +108,13 @@ def log_spectrogram(spectrogram, ref=1.0):
     return logspect
 
 
-def compute_logmel(samples, config=feat_config):
+def compute_logmel(samples, config):
     melspect = compute_mel_spectrogram(samples, config)
     logmel = log_spectrogram(melspect)
     return logmel
 
 
-def compute_mfcc(samples, config=feat_config):
+def compute_mfcc(samples, config):
     mfccs = librosa.feature.mfcc(
         y=samples,
         sr=config["sr"],
@@ -137,25 +134,25 @@ def mfcc_delta(mfccs, order):
     return delta
 
 
-def compute_delta1(samples, config=feat_config):
+def compute_delta1(samples, config):
     mfccs = compute_mfcc(samples, config=config)
     delta1 = mfcc_delta(mfccs, 1)
     return delta1
 
 
-def compute_delta2(samples, config=feat_config):
+def compute_delta2(samples, config):
     mfccs = compute_mfcc(samples, config=config)
     delta2 = mfcc_delta(mfccs, 2)
     return delta2
 
 
-def compute_zcr(samples, config=feat_config):
+def compute_zcr(samples, config):
     return librosa.feature.zero_crossing_rate(
         y=samples, frame_length=config["n_fft"], hop_length=config["hop_length"]
     )
 
 
-def compute_spectral_centroid(samples, config=feat_config):
+def compute_spectral_centroid(samples, config):
     return librosa.feature.spectral_centroid(
         y=samples,
         sr=config["sr"],
@@ -164,7 +161,7 @@ def compute_spectral_centroid(samples, config=feat_config):
     )
 
 
-def compute_spectral_rolloff(samples, config=feat_config):
+def compute_spectral_rolloff(samples, config):
     return librosa.feature.spectral_rolloff(
         y=samples,
         sr=config["sr"],

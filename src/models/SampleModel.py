@@ -13,38 +13,38 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class AudioFrontend(nn.Module):
-    def __init__(self, feat_config):
+    def __init__(self, config):
         super(AudioFrontend, self).__init__()
 
-        self.feat_config = feat_config
+        self.config = config
 
-        transform = feat_config["transform"]
+        transform = config["transform"]
 
         if transform == "stftw":
             spectrogram_extractor = Spectrogram(
-                n_fft=feat_config["n_fft"],
-                hop_length=feat_config["hop_length"],
+                n_fft=config["n_fft"],
+                hop_length=config["hop_length"],
                 power=1.0,
-                center=feat_config["center"],
+                center=config["center"],
             ).to(
                 device
             )  # added
-            freq_bins = 1 + feat_config["n_fft"] / 2
-            res = (0.5 * feat_config["sr"]) / freq_bins
-            start_idx = int(feat_config["fmin"] / res)
-            end_idx = int(feat_config["fmax"] / res)
+            freq_bins = 1 + config["n_fft"] / 2
+            res = (0.5 * config["sr"]) / freq_bins
+            start_idx = int(config["fmin"] / res)
+            end_idx = int(config["fmax"] / res)
             self.extractor = lambda x: spectrogram_extractor(x)[:, start_idx:end_idx]
             self.n_feats = end_idx - start_idx
             print(self.n_feats, start_idx, end_idx)
         elif transform == "logmel":
             melspectrogram_extractor = MelSpectrogram(
-                sample_rate=feat_config["sr"],
-                n_fft=feat_config["n_fft"],
-                hop_length=feat_config["hop_length"],
-                f_min=feat_config["fmin"],
-                f_max=feat_config["fmax"],
-                n_mels=feat_config["n_mels"],
-                center=feat_config["center"],
+                sample_rate=config["sr"],
+                n_fft=config["n_fft"],
+                hop_length=config["hop_length"],
+                f_min=config["fmin"],
+                f_max=config["fmax"],
+                n_mels=config["n_mels"],
+                center=config["center"],
                 norm="slaney",
                 mel_scale="slaney",
             ).to(
@@ -52,22 +52,22 @@ class AudioFrontend(nn.Module):
             )  # added
             db_scale = AmplitudeToDB(top_db=80.0).to(device)  # added
             self.extractor = lambda x: db_scale(melspectrogram_extractor(x))
-            self.n_feats = feat_config["n_mels"]
+            self.n_feats = config["n_mels"]
         elif transform == "mfcc":
             self.extractor = MFCC(
-                sample_rate=feat_config["sr"],
-                n_mfcc=feat_config["n_mfcc"],
+                sample_rate=config["sr"],
+                n_mfcc=config["n_mfcc"],
                 melkwargs=dict(
-                    n_fft=feat_config["n_fft"],
-                    hop_length=feat_config["hop_length"],
-                    f_min=feat_config["fmin"],
-                    f_max=feat_config["fmax"],
-                    n_mels=feat_config["n_mels"],
+                    n_fft=config["n_fft"],
+                    hop_length=config["hop_length"],
+                    f_min=config["fmin"],
+                    f_max=config["fmax"],
+                    n_mels=config["n_mels"],
                     norm="slaney",
                     mel_scale="slaney",
                 ),
             )
-            self.n_feats = feat_config["n_mfcc"]
+            self.n_feats = config["n_mfcc"]
         else:
             print("Not supported")
 
@@ -147,24 +147,21 @@ class SampleModel(nn.Module):
         classes_num=1,
         conv_dropout=0.2,
         fc_dropout=0.5,
-        feat_config=None,
-        time_drop_width=10,
-        freq_drop_width=4,
+        audio_config=None,
     ):
         super(SampleModel, self).__init__()
 
-        if feat_config is not None:
-            self.audio_frontend = AudioFrontend(feat_config)
-            n_feats = self.audio_frontend.n_feats
+        self.audio_frontend = AudioFrontend(config=audio_config)
+        n_feats = self.audio_frontend.n_feats
 
         self.bn = nn.BatchNorm2d(n_feats)
 
         # time_drop_width = 10  # time_drop_width=64 / 100 * (64 / 1000) = 6.4% --> 157*0.064 = 10.048
         # freq_drop_width = n_feats // 8  # freq_drop_width=8 / 100 * (8 / 64) = 12.5%  --> SAME
         self.spec_augmenter = SpecAugmentation(
-            time_drop_width=time_drop_width,
+            time_drop_width=audio_config["time_drop_width"],
             time_stripes_num=2,
-            freq_drop_width=freq_drop_width,
+            freq_drop_width=audio_config["freq_drop_width"],
             freq_stripes_num=2,
         )
 
