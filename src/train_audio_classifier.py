@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import sys
+from itertools import combinations
 from pathlib import Path
 
 import numpy as np
@@ -21,7 +22,13 @@ from utils.arguments import (
     ModelArguments,
     TrainingArguments,
 )
-from utils.constants import SEED, UNKNOWN_DIAGNOSES
+from utils.constants import (
+    SEED,
+    UNKNOWN_DIAGNOSES,
+    SAMPLES_DF_FILE,
+    AUDIO_DATA_FILE,
+)
+from utils.helpers import get_model_file, get_aggregate_file
 
 
 # Ignore excessive warnings
@@ -40,13 +47,29 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 wandb.login()
 
 
-def position_aggregation(samples_df, data_loader, val_fold, test_fold, config, device):
+def position_aggregation(
+    samples_df,
+    data_loader,
+    val_fold,
+    test_fold,
+    audio_args,
+    model_args,
+    train_args,
+    device,
+):
     # Get sample features
-    target = config.target
+    target = train_args.target
     target_str = "+".join([str(t) for t in target])
 
     sample_outputs = pipeline.make_features(
-        samples_df, data_loader, val_fold, test_fold, config, device
+        samples_df,
+        data_loader,
+        val_fold,
+        test_fold,
+        audio_args,
+        model_args,
+        train_args,
+        device,
     )
 
     output_df = samples_df[["patient", "position"]]
@@ -54,15 +77,13 @@ def position_aggregation(samples_df, data_loader, val_fold, test_fold, config, d
         columns={"output": f"output_{target_str}"}
     )
 
-    out_dir = os.path.join(config.out_folder, "aggregate")
-    Path(out_dir).mkdir(parents=True, exist_ok=True)
-    out_path = os.path.join(
-        out_dir,
-        config.aggregate_file.format(
-            config.network["feature_model"], target_str, val_fold, test_fold
-        ),
+    agg_dir = os.path.join(train_args.out_path, "aggregate")
+    Path(agg_dir).mkdir(parents=True, exist_ok=True)
+    agg_file = get_aggregate_file(
+        model_args.model_name, target_str, val_fold, test_fold
     )
-    output_df.to_csv(out_path, index=False)
+    agg_file = os.path.join(agg_dir, agg_file)
+    output_df.to_csv(agg_file, index=False)
 
 
 def evaluate_and_save(
@@ -73,7 +94,8 @@ def evaluate_and_save(
     fold_2,
     criterion,
     best_score,
-    config,
+    model_args,
+    train_args,
     device,
     val_first=True,
 ):
@@ -86,25 +108,21 @@ def evaluate_and_save(
         val_fold = fold_2
         test_fold = fold_1
 
-    metrics, pos_score, example_spect = sample_fit.evaluate(
-        model, val_loader, criterion, device
-    )
+    metrics, pos_score = sample_fit.evaluate(model, val_loader, criterion, device)
 
     avg_score = [score for score in pos_score.values()]
     avg_score = np.array(avg_score).mean()
     if avg_score > best_score:
         best_score = avg_score
         print(f"Best overall model ({val_fold}-{test_fold})\n")
-        target_str = "+".join([str(t) for t in config.target])
-        out_dir = os.path.join(config.out_folder, "models")
-        Path(out_dir).mkdir(parents=True, exist_ok=True)
-        model_path = os.path.join(
-            out_dir,
-            config.model_file.format(
-                config.network["feature_model"], target_str, val_fold, test_fold
-            ),
+        target_str = "+".join([str(t) for t in train_args.target])
+        model_dir = os.path.join(train_args.out_path, "models")
+        Path(model_dir).mkdir(parents=True, exist_ok=True)
+        model_file = get_model_file(
+            model_args.model_name, target_str, val_fold, test_fold
         )
-        torch.save(model.state_dict(), model_path)
+        model_file = os.path.join(model_dir, model_file)
+        torch.save(model.state_dict(), model_file)
 
     return metrics, best_score
 
@@ -119,20 +137,23 @@ def fit_samples(
     optimizer,
     criterion,
     cv_index,
-    config,
+    model_args,
+    train_args,
 ):
-    # wandb.watch(model, log="all")
 
     best_score_1 = 0
     best_score_2 = 0
 
     print("Steps per epoch:", len(train_loader))
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        optimizer, max_lr=0.001, steps_per_epoch=len(train_loader), epochs=config.epochs
+        optimizer,
+        max_lr=0.001,
+        steps_per_epoch=len(train_loader),
+        epochs=train_args.epochs,
     )  # added
 
-    for epoch in range(config.epochs):
-        step = cv_index * config.epochs + epoch
+    for epoch in range(train_args.epochs):
+        step = cv_index * train_args.epochs + epoch
         # train_loss = sample_fit.train_epoch_mod(model, train_loader, optimizer, criterion, epoch, device,
         train_loss = sample_fit.train_epoch(
             model,
@@ -151,7 +172,7 @@ def fit_samples(
             step=step,
         )
 
-        if epoch + 1 >= config.validation_start:
+        if epoch + 1 >= train_args.validation_start:
             # 1. Evaluate on first fold
             metrics, best_score_1 = evaluate_and_save(
                 model,
@@ -161,7 +182,8 @@ def fit_samples(
                 fold_2,
                 criterion,
                 best_score_1,
-                config,
+                model_args,
+                train_args,
                 device,
                 val_first=True,
             )
@@ -176,13 +198,25 @@ def fit_samples(
                 fold_2,
                 criterion,
                 best_score_2,
-                config,
+                model_args,
+                train_args,
                 device,
                 val_first=False,
             )
 
 
-def model_pipeline(samples_df, data, fold_1, fold_2, cv_index, config):
+def model_pipeline(
+    samples_df,
+    data,
+    fold_1,
+    fold_2,
+    cv_index,
+    audio_args,
+    model_args,
+    train_args,
+    device,
+):
+
     (
         model,
         train_loader,
@@ -190,8 +224,11 @@ def model_pipeline(samples_df, data, fold_1, fold_2, cv_index, config):
         loader_2,
         optimizer,
         criterion,
-    ) = pipeline.make_sample_model(samples_df, data, fold_1, fold_2, config, device)
-    if not no_fit:
+    ) = pipeline.make_sample_model(
+        samples_df, data, fold_1, fold_2, audio_args, model_args, train_args, device
+    )
+
+    if train_args.do_train:
         fit_samples(
             model,
             train_loader,
@@ -202,16 +239,15 @@ def model_pipeline(samples_df, data, fold_1, fold_2, cv_index, config):
             optimizer,
             criterion,
             cv_index,
-            config,
+            model_args,
+            train_args,
         )
 
     ds = AudioDataset(
         samples_df,
+        target=train_args.target,
         data=data,
-        target=config.target,
-        preprocessing=config.preprocessing,
-        pre_config=config.pre_config,
-        split_config=config.split_config,
+        audio_args=audio_args,
         train=False,
     )
 
@@ -222,7 +258,9 @@ def model_pipeline(samples_df, data, fold_1, fold_2, cv_index, config):
         data_loader,
         val_fold=fold_1,
         test_fold=fold_2,
-        config=config,
+        audio_args=audio_args,
+        model_args=model_args,
+        train_args=train_args,
         device=device,
     )
     position_aggregation(
@@ -230,24 +268,29 @@ def model_pipeline(samples_df, data, fold_1, fold_2, cv_index, config):
         data_loader,
         val_fold=fold_2,
         test_fold=fold_1,
-        config=config,
+        audio_args=audio_args,
+        model_args=model_args,
+        train_args=train_args,
         device=device,
     )
 
 
-def load_data(config):
-    samples_df = pd.read_csv(config.samples_df_path)
-    data = np.load(config.samples_path)
+def load_data(data_args, train_args):
+    samples_df_path = os.path.join(data_args.processed_path, SAMPLES_DF_FILE)
+    audio_data_path = os.path.join(data_args.processed_path, AUDIO_DATA_FILE)
 
-    if config.target[0] != 0:
+    samples_df = pd.read_csv(samples_df_path)
+    data = np.load(audio_data_path)
+
+    if train_args.target[0] != 0:
         print("Removing patients with multiple diagnoses")
         diagnosis_filter = ~(
-            samples_df.multilabel | samples_df.diagnosis.isin(config.exclude)
+            samples_df.multilabel | samples_df.diagnosis.isin(train_args.exclude)
         ).values
         samples_df = samples_df[diagnosis_filter].reset_index(drop=True)
         data = data[diagnosis_filter]
 
-    if 3 in config.target or 5 in config.target:
+    if 3 in train_args.target or 5 in train_args.target:
         print("Removing patients with unknown diagnosis")
         diagnosis_filter = ~(samples_df.patient.isin(UNKNOWN_DIAGNOSES)).values
         samples_df = samples_df[diagnosis_filter].reset_index(drop=True)
@@ -261,37 +304,32 @@ def load_data(config):
     return samples_df, data
 
 
-def experiment(config, online=False):
+def experiment(data_args, audio_args, model_args, train_args, online=False):
     # Initialize a new wandb run
     mode = "online" if online else "offline"
-    with wandb.init(project="deep-breath", config=config, mode=mode):
+    with wandb.init(project="deep-breath", mode=mode):  # config=config TODO
         # If called by wandb.agent, as below,
         # this config will be set by Sweep Controller
-        config = wandb.config
 
-        samples_df, data = load_data(config)
+        samples_df, data = load_data(data_args, train_args)
 
-        for cv_index, (fold_1, fold_2) in enumerate(config.cv_folds):
+        for cv_index, (fold_1, fold_2) in enumerate(combinations(range(5), 2)):
             print()
             print("#" * 25, fold_1, fold_2, "#" * 25)
-            model_pipeline(samples_df, data, fold_1, fold_2, cv_index, config)
+            model_pipeline(
+                samples_df,
+                data,
+                fold_1,
+                fold_2,
+                cv_index,
+                audio_args,
+                model_args,
+                train_args,
+            )
             print()
 
 
 def main():
-    # Defines all parser arguments when launching the script directly in terminal
-    """parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "target_list", type=int, nargs="+", help="Diagnosis code(s) of target class"
-    )
-    parser.add_argument(
-        "-nf",
-        "--no_fit",
-        help="Skip model training, use saved models to produce features",
-        action="store_true",
-    )
-    args = parser.parse_args()"""
-
     parser = HfArgumentParser(
         (DataArguments, AudioArguments, ModelArguments, TrainingArguments)
     )
@@ -300,13 +338,15 @@ def main():
             json_file=os.path.abspath(sys.argv[1])
         )
     else:
-        data_args, audio_args = parser.parse_args_into_dataclasses()
+        (
+            data_args,
+            audio_args,
+            model_args,
+            train_args,
+        ) = parser.parse_args_into_dataclasses()
 
-    no_fit = args.no_fit
-    pipeline_config["target"] = args.target_list
+    experiment(data_args, audio_args, model_args, train_args)
 
-    experiment(pipeline_config)
-    
 
 if __name__ == "__main__":
     main()

@@ -18,33 +18,33 @@ class AudioFrontend(nn.Module):
 
         self.config = config
 
-        transform = config["transform"]
+        transform = config.transform
 
         if transform == "stftw":
             spectrogram_extractor = Spectrogram(
-                n_fft=config["n_fft"],
-                hop_length=config["hop_length"],
+                n_fft=config.n_fft,
+                hop_length=config.hop_length,
                 power=1.0,
-                center=config["center"],
+                center=config.center,
             ).to(
                 device
             )  # added
-            freq_bins = 1 + config["n_fft"] / 2
-            res = (0.5 * config["sr"]) / freq_bins
-            start_idx = int(config["fmin"] / res)
-            end_idx = int(config["fmax"] / res)
+            freq_bins = 1 + config.n_fft / 2
+            res = (0.5 * config.sr) / freq_bins
+            start_idx = int(config.fmin / res)
+            end_idx = int(config.fmax / res)
             self.extractor = lambda x: spectrogram_extractor(x)[:, start_idx:end_idx]
             self.n_feats = end_idx - start_idx
             print(self.n_feats, start_idx, end_idx)
         elif transform == "logmel":
             melspectrogram_extractor = MelSpectrogram(
-                sample_rate=config["sr"],
-                n_fft=config["n_fft"],
-                hop_length=config["hop_length"],
-                f_min=config["fmin"],
-                f_max=config["fmax"],
-                n_mels=config["n_mels"],
-                center=config["center"],
+                sample_rate=config.sr,
+                n_fft=config.n_fft,
+                hop_length=config.hop_length,
+                f_min=config.fmin,
+                f_max=config.fmax,
+                n_mels=config.n_mels,
+                center=config.center,
                 norm="slaney",
                 mel_scale="slaney",
             ).to(
@@ -52,22 +52,22 @@ class AudioFrontend(nn.Module):
             )  # added
             db_scale = AmplitudeToDB(top_db=80.0).to(device)  # added
             self.extractor = lambda x: db_scale(melspectrogram_extractor(x))
-            self.n_feats = config["n_mels"]
+            self.n_feats = config.n_mels
         elif transform == "mfcc":
             self.extractor = MFCC(
-                sample_rate=config["sr"],
-                n_mfcc=config["n_mfcc"],
+                sample_rate=config.sr,
+                n_mfcc=config.n_mfcc,
                 melkwargs=dict(
-                    n_fft=config["n_fft"],
-                    hop_length=config["hop_length"],
-                    f_min=config["fmin"],
-                    f_max=config["fmax"],
-                    n_mels=config["n_mels"],
+                    n_fft=config.n_fft,
+                    hop_length=config.hop_length,
+                    f_min=config.fmin,
+                    f_max=config.fmax,
+                    n_mels=config.n_mels,
                     norm="slaney",
                     mel_scale="slaney",
                 ),
             )
-            self.n_feats = config["n_mfcc"]
+            self.n_feats = config.n_mfcc
         else:
             print("Not supported")
 
@@ -138,17 +138,16 @@ class Classifier(nn.Module):
 
 
 class SampleModel(nn.Module):
-    def __init__(
-        self,
-        feature_model,
-        n_feats=64,
-        conv_channels=32,
-        fc_features=64,
-        classes_num=1,
-        conv_dropout=0.2,
-        fc_dropout=0.5,
-        audio_config=None,
-    ):
+    """
+    n_feats=64,
+    conv_channels=32,
+    fc_features=64,
+    classes_num=1,
+    conv_dropout=0.2,
+    fc_dropout=0.5,
+    """
+
+    def __init__(self, audio_config, model_config):
         super(SampleModel, self).__init__()
 
         self.audio_frontend = AudioFrontend(config=audio_config)
@@ -159,26 +158,33 @@ class SampleModel(nn.Module):
         # time_drop_width = 10  # time_drop_width=64 / 100 * (64 / 1000) = 6.4% --> 157*0.064 = 10.048
         # freq_drop_width = n_feats // 8  # freq_drop_width=8 / 100 * (8 / 64) = 12.5%  --> SAME
         self.spec_augmenter = SpecAugmentation(
-            time_drop_width=audio_config["time_drop_width"],
+            time_drop_width=audio_config.time_drop_width,
             time_stripes_num=2,
-            freq_drop_width=audio_config["freq_drop_width"],
+            freq_drop_width=audio_config.freq_drop_width,
             freq_stripes_num=2,
         )
 
+        feature_model = model_config.model_name
         self.feature_model = feature_model
 
         if feature_model == "cnn6":
-            self.features = Cnn6(conv_channels=conv_channels, dropout=conv_dropout)
+            self.features = Cnn6(
+                conv_channels=model_config.conv_channels,
+                dropout=model_config.conv_dropout,
+            )
         elif feature_model == "cnn10":
-            self.features = Cnn10(conv_channels=conv_channels, dropout=conv_dropout)
+            self.features = Cnn10(
+                conv_channels=model_config.conv_channels,
+                dropout=model_config.conv_dropout,
+            )
         elif feature_model == "dense":
-            self.features = Cnn10Att(classes_num=classes_num)
+            self.features = Cnn10Att(classes_num=model_config.classes_num)
 
         self.classifier = Classifier(
-            n_feats=8 * conv_channels,
-            fc_features=fc_features,
-            classes_num=classes_num,
-            dropout=fc_dropout,
+            n_feats=8 * model_config.conv_channels,
+            fc_features=model_config.fc_features,
+            classes_num=model_config.classes_num,
+            dropout=model_config.fc_dropout,
         )
 
         self.init_weight()

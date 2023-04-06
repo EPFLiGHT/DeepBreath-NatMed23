@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from transformers import TrainingArguments
-
 
 @dataclass
 class DataArguments:
@@ -32,11 +30,6 @@ class DataArguments:
 
     pneumoscope_locations: List[str] = field(
         default_factory=lambda: ["GVA", "POA", "DKR", "MAR", "RBA", "YAO"],
-        metadata={"help": ("TODO")},
-    )
-
-    out_path: str = field(
-        default="../out",
         metadata={"help": ("TODO")},
     )
 
@@ -174,6 +167,11 @@ class ModelArguments:
         metadata={"help": ("TODO")},
     )
 
+    classes_num: int = field(
+        default=1,
+        metadata={"help": ("TODO")},
+    )
+
 
 @dataclass
 class TrainingArguments:
@@ -186,8 +184,18 @@ class TrainingArguments:
         metadata={"help": ("TODO")},
     )
 
+    do_train: bool = field(
+        default=True,
+        metadata={"help": ("TODO")},
+    )
+
     target: List[int] = field(
         default_factory=lambda: [0],
+        metadata={"help": ("TODO")},
+    )
+
+    target: List[int] = field(
+        default_factory=list,
         metadata={"help": ("TODO")},
     )
 
@@ -218,6 +226,26 @@ class TrainingArguments:
 
     sampling_alpha: float = field(
         default=0.6,
+        metadata={"help": ("TODO")},
+    )
+
+    optimizer_name: str = field(
+        default="adamw",
+        metadata={"help": ("TODO")},
+    )
+
+    learning_rate: float = field(
+        default=1e-4,
+        metadata={"help": ("TODO")},
+    )
+
+    weight_decay: float = field(
+        default=5e-3,
+        metadata={"help": ("TODO")},
+    )
+
+    momentum: float = field(
+        default=0.9,
         metadata={"help": ("TODO")},
     )
 

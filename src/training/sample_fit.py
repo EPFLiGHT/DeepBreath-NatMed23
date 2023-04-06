@@ -155,7 +155,6 @@ def evaluate(model, val_loader, criterion, device):
     model.eval()
 
     val_loss = 0
-    example_spect = []
 
     val_samples_df = val_loader.dataset.samples_df
     val_samples_df["prediction"] = -1
@@ -201,9 +200,6 @@ def evaluate(model, val_loader, criterion, device):
                 0, 0
             ]
 
-            # WandB – Log images in your val dataset automatically
-            example_spect.append(torch.unsqueeze(data[0], 0))
-
     position_df = position_df.reset_index()
     metrics, pos_score = classification_metrics(
         val_samples_df, position_df, verbose=True
@@ -211,4 +207,4 @@ def evaluate(model, val_loader, criterion, device):
     val_loss = val_loss / len(val_samples_df)
     metrics["Validation Loss"] = val_loss
 
-    return metrics, pos_score, example_spect
+    return metrics, pos_score

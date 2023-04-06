@@ -34,13 +34,26 @@ def make_sample_loader(ds, train_args):
     return data_loader
 
 
-def make_optimizer(model, optimizer, parameters):
+def make_optimizer(params, train_args):
     if optimizer == "sgd":
-        optimizer = torch.optim.SGD(model.parameters(), momentum=0.9, **parameters)
+        optimizer = torch.optim.SGD(
+            params=params,
+            momentum=train_args.momentum,
+            lr=train_args.learning_rate,
+            weight_decay=train_args.weight_decay,
+        )
     elif optimizer == "adam":
-        optimizer = torch.optim.Adam(model.parameters(), **parameters)
+        optimizer = torch.optim.Adam(
+            params=params,
+            lr=train_args.learning_rate,
+            weight_decay=train_args.weight_decay,
+        )
     elif optimizer == "adamw":
-        optimizer = torch.optim.AdamW(model.parameters(), **parameters)
+        optimizer = torch.optim.AdamW(
+            params=params,
+            lr=train_args.learning_rate,
+            weight_decay=train_args.weight_decay,
+        )
 
     return optimizer
 
@@ -50,8 +63,10 @@ def make_loss():
     return criterion
 
 
-def make_sample_model(samples_df, data, fold_1, fold_2, config, device):
-    loc_selection = (samples_df.location.isin(config.train_loc)).values
+def make_sample_model(
+    samples_df, data, fold_1, fold_2, audio_args, model_args, train_args, device
+):
+    loc_selection = (samples_df.location.isin(train_args.train_loc)).values
     samples_df = samples_df[loc_selection].reset_index(drop=True)
     data = data[loc_selection]
 
@@ -61,43 +76,35 @@ def make_sample_model(samples_df, data, fold_1, fold_2, config, device):
 
     train_ds = AudioDataset(
         samples_df[train_indices],
+        target=train_args.target,
         data=data[train_indices],
-        target=config.target,
-        preprocessing=config.preprocessing,
-        pre_config=config.pre_config,
-        split_config=config.split_config,
+        audio_args=audio_args,
     )
     ds_1 = AudioDataset(
         samples_df[indices_1],
+        target=train_args.target,
         data=data[indices_1],
-        target=config.target,
-        preprocessing=config.preprocessing,
-        pre_config=config.pre_config,
-        split_config=config.split_config,
+        audio_args=audio_args,
         train=False,
     )
     ds_2 = AudioDataset(
         samples_df[indices_2],
+        target=train_args.target,
         data=data[indices_2],
-        target=config.target,
-        preprocessing=config.preprocessing,
-        pre_config=config.pre_config,
-        split_config=config.split_config,
+        audio_args=audio_args,
         train=False,
     )
 
-    train_loader = make_sample_loader(train_ds, config)
+    train_loader = make_sample_loader(train_ds, train_args)
     loader_1 = DataLoader(ds_1, batch_size=1, shuffle=False)
     loader_2 = DataLoader(ds_2, batch_size=1, shuffle=False)
 
     # Make the model
-    model = SampleModel(**config.network).to(device)
+    model = SampleModel(audio_config=audio_args, model_config=model_args).to(device)
 
     # Make the loss and optimizer
     criterion = make_loss()
-    optimizer = make_optimizer(
-        model, config.optimizer["name"], config.optimizer["parameters"]
-    )
+    optimizer = make_optimizer(model.parameters(), train_args)
 
     return model, train_loader, loader_1, loader_2, optimizer, criterion
 
@@ -125,7 +132,7 @@ def make_features(
     frame_values = np.zeros((len(samples_df), max_stft_samples + 1))
     attention_values = np.zeros((len(samples_df), max_stft_samples + 1))
 
-    model = SampleModel(**config.network).to(device)
+    model = SampleModel(audio_config=audio_args, model_config=model_args).to(device)
     model_file = get_model_file(model_name, target_str, val_fold, test_fold)
     model_path = os.path.join(train_args.out_path, "models", model_file)
     model.load_state_dict(torch.load(model_path, map_location=device))
