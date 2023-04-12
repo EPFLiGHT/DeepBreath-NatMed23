@@ -1,0 +1,29 @@
+{
+    "sr": 4000,
+    "max_duration": 30.0,
+    "split_duration": 5.0,
+    "transform": "logmel",
+    "n_fft": 256,
+    "hop_length": 64,
+    "n_mels": 32,
+    "fmin": 250,
+    "fmax": 750,
+    "out_path": "../out",
+    "do_train": true,
+    "online_logging": false,
+    "target": [
+        5
+    ],
+    "train_loc": [
+        "GVA",
+        "POA"
+    ],
+    "epochs": 100,
+    "validation_start": 60,
+    "batch_size": 64,
+    "balanced_sampling": true,
+    "optimizer_name": "adamw",
+    "learning_rate": 0.0001,
+    "weight_decay": 0.005,
+    "save_outputs": true
+}

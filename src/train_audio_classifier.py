@@ -47,43 +47,33 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 wandb.login()
 
 
-def position_aggregation(
-    samples_df,
-    data_loader,
-    val_fold,
-    test_fold,
-    audio_args,
-    model_args,
-    train_args,
-    device,
-):
-    # Get sample features
-    target = train_args.target
-    target_str = "+".join([str(t) for t in target])
+def load_data(data_args, train_args):
+    samples_df_path = os.path.join(data_args.processed_path, SAMPLES_DF_FILE)
+    audio_data_path = os.path.join(data_args.processed_path, AUDIO_DATA_FILE)
 
-    sample_outputs = pipeline.make_features(
-        samples_df,
-        data_loader,
-        val_fold,
-        test_fold,
-        audio_args,
-        model_args,
-        train_args,
-        device,
-    )
+    samples_df = pd.read_csv(samples_df_path)
+    data = np.load(audio_data_path)
 
-    output_df = samples_df[["patient", "position"]]
-    output_df = output_df.assign(output=sample_outputs).rename(
-        columns={"output": f"output_{target_str}"}
-    )
+    if train_args.target[0] != 0:
+        print("Removing patients with multiple diagnoses")
+        diagnosis_filter = ~(
+            samples_df.multilabel | samples_df.diagnosis.isin(train_args.exclude)
+        ).values
+        samples_df = samples_df[diagnosis_filter].reset_index(drop=True)
+        data = data[diagnosis_filter]
 
-    agg_dir = os.path.join(train_args.out_path, "aggregate")
-    Path(agg_dir).mkdir(parents=True, exist_ok=True)
-    agg_file = get_aggregate_file(
-        model_args.model_name, target_str, val_fold, test_fold
-    )
-    agg_file = os.path.join(agg_dir, agg_file)
-    output_df.to_csv(agg_file, index=False)
+    if 3 in train_args.target or 5 in train_args.target:
+        print("Removing patients with unknown diagnosis")
+        diagnosis_filter = ~(samples_df.patient.isin(UNKNOWN_DIAGNOSES)).values
+        samples_df = samples_df[diagnosis_filter].reset_index(drop=True)
+        data = data[diagnosis_filter]
+
+    print("Filtering YAO data")
+    position_filter = samples_df.position.isin([f"P{i + 1}" for i in range(8)])
+    samples_df = samples_df[position_filter].reset_index(drop=True)
+    data = data[position_filter]
+
+    return samples_df, data
 
 
 def evaluate_and_save(
@@ -96,7 +86,6 @@ def evaluate_and_save(
     best_score,
     model_args,
     train_args,
-    device,
     val_first=True,
 ):
     if val_first:
@@ -153,7 +142,6 @@ def fit_samples(
 
     for epoch in range(train_args.epochs):
         step = cv_index * train_args.epochs + epoch
-        # train_loss = sample_fit.train_epoch_mod(model, train_loader, optimizer, criterion, epoch, device,
         train_loss = sample_fit.train_epoch(
             model,
             train_loader,
@@ -183,7 +171,6 @@ def fit_samples(
                 best_score_1,
                 model_args,
                 train_args,
-                device,
                 val_first=True,
             )
             wandb.log(metrics, step=step)
@@ -199,9 +186,46 @@ def fit_samples(
                 best_score_2,
                 model_args,
                 train_args,
-                device,
                 val_first=False,
             )
+
+
+def position_aggregation(
+    samples_df,
+    data_loader,
+    val_fold,
+    test_fold,
+    audio_args,
+    model_args,
+    train_args,
+):
+    # Get sample features
+    target = train_args.target
+    target_str = "+".join([str(t) for t in target])
+
+    sample_outputs = pipeline.make_features(
+        samples_df,
+        data_loader,
+        val_fold,
+        test_fold,
+        audio_args,
+        model_args,
+        train_args,
+        device,
+    )
+
+    output_df = samples_df[["patient", "position"]]
+    output_df = output_df.assign(output=sample_outputs).rename(
+        columns={"output": f"output_{target_str}"}
+    )
+
+    agg_dir = os.path.join(train_args.out_path, "aggregate")
+    Path(agg_dir).mkdir(parents=True, exist_ok=True)
+    agg_file = get_aggregate_file(
+        model_args.model_name, target_str, val_fold, test_fold
+    )
+    agg_file = os.path.join(agg_dir, agg_file)
+    output_df.to_csv(agg_file, index=False)
 
 
 def model_pipeline(
@@ -213,7 +237,6 @@ def model_pipeline(
     audio_args,
     model_args,
     train_args,
-    device,
 ):
     (
         model,
@@ -259,7 +282,6 @@ def model_pipeline(
         audio_args=audio_args,
         model_args=model_args,
         train_args=train_args,
-        device=device,
     )
     position_aggregation(
         samples_df,
@@ -269,63 +291,7 @@ def model_pipeline(
         audio_args=audio_args,
         model_args=model_args,
         train_args=train_args,
-        device=device,
     )
-
-
-def load_data(data_args, train_args):
-    samples_df_path = os.path.join(data_args.processed_path, SAMPLES_DF_FILE)
-    audio_data_path = os.path.join(data_args.processed_path, AUDIO_DATA_FILE)
-
-    samples_df = pd.read_csv(samples_df_path)
-    data = np.load(audio_data_path)
-
-    if train_args.target[0] != 0:
-        print("Removing patients with multiple diagnoses")
-        diagnosis_filter = ~(
-            samples_df.multilabel | samples_df.diagnosis.isin(train_args.exclude)
-        ).values
-        samples_df = samples_df[diagnosis_filter].reset_index(drop=True)
-        data = data[diagnosis_filter]
-
-    if 3 in train_args.target or 5 in train_args.target:
-        print("Removing patients with unknown diagnosis")
-        diagnosis_filter = ~(samples_df.patient.isin(UNKNOWN_DIAGNOSES)).values
-        samples_df = samples_df[diagnosis_filter].reset_index(drop=True)
-        data = data[diagnosis_filter]
-
-    print("Filtering YAO data")
-    position_filter = samples_df.position.isin([f"P{i + 1}" for i in range(8)])
-    samples_df = samples_df[position_filter].reset_index(drop=True)
-    data = data[position_filter]
-
-    return samples_df, data
-
-
-def experiment(data_args, audio_args, model_args, train_args, online=False):
-    # Initialize a new wandb run
-    mode = "online" if online else "offline"
-    with wandb.init(project="deep-breath", mode=mode):  # config=config TODO
-        # If called by wandb.agent, as below,
-        # this config will be set by Sweep Controller
-
-        samples_df, data = load_data(data_args, train_args)
-
-        for cv_index, (fold_1, fold_2) in enumerate(combinations(range(5), 2)):
-            print()
-            print("#" * 25, fold_1, fold_2, "#" * 25)
-            model_pipeline(
-                samples_df,
-                data,
-                fold_1,
-                fold_2,
-                cv_index,
-                audio_args,
-                model_args,
-                train_args,
-                device,
-            )
-            print()
 
 
 def main():
@@ -344,7 +310,24 @@ def main():
             train_args,
         ) = parser.parse_args_into_dataclasses()
 
-    experiment(data_args, audio_args, model_args, train_args)
+    samples_df, data = load_data(data_args, train_args)
+
+    mode = "online" if train_args.online_logging else "offline"
+    with wandb.init(project="deep-breath", mode=mode):
+        for cv_index, (fold_1, fold_2) in enumerate(combinations(range(5), 2)):
+            print()
+            print("#" * 25, fold_1, fold_2, "#" * 25)
+            model_pipeline(
+                samples_df,
+                data,
+                fold_1,
+                fold_2,
+                cv_index,
+                audio_args,
+                model_args,
+                train_args,
+            )
+            print()
 
 
 if __name__ == "__main__":

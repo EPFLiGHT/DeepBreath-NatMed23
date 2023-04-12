@@ -179,6 +179,15 @@ class TrainingArguments:
     Arguments for model training.
     """
 
+    target: List[int] = field(
+        metadata={"help": ("Target class(es) for binary classification.")},
+    )
+
+    exclude: List[int] = field(
+        default_factory=list,
+        metadata={"help": ("List of classes that should be excluded from training.")},
+    )
+
     out_path: str = field(
         default="../out",
         metadata={
@@ -191,9 +200,9 @@ class TrainingArguments:
         metadata={"help": ("Whether to run training.")},
     )
 
-    target: List[int] = field(
-        default_factory=lambda: [0],
-        metadata={"help": ("Target class(es) for binary classification.")},
+    online_logging: bool = field(
+        default=False,
+        metadata={"help": ("Whether to upload training logs to Weights & Biases.")},
     )
 
     train_loc: List[str] = field(
