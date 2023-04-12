@@ -147,18 +147,13 @@ class ModelArguments:
         metadata={"help": ("TODO")},
     )
 
-    fc_features: int = field(
-        default=128,
-        metadata={"help": ("TODO")},
-    )
-
     conv_dropout: float = field(
         default=0.2,
         metadata={"help": ("TODO")},
     )
 
     fc_dropout: float = field(
-        default=0.2,
+        default=0.5,
         metadata={"help": ("TODO")},
     )
 

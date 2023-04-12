@@ -140,7 +140,6 @@ def fit_samples(
     model_args,
     train_args,
 ):
-
     best_score_1 = 0
     best_score_2 = 0
 
@@ -216,7 +215,6 @@ def model_pipeline(
     train_args,
     device,
 ):
-
     (
         model,
         train_loader,
