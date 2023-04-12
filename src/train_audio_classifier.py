@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import random
@@ -24,7 +25,7 @@ from utils.arguments import (
 )
 from utils.constants import (
     SEED,
-    UNKNOWN_DIAGNOSES,
+    UNKNOWN_DIAGNOSES_FILE,
     SAMPLES_DF_FILE,
     AUDIO_DATA_FILE,
 )
@@ -63,10 +64,15 @@ def load_data(data_args, train_args):
         data = data[diagnosis_filter]
 
     if 3 in train_args.target or 5 in train_args.target:
-        print("Removing patients with unknown diagnosis")
-        diagnosis_filter = ~(samples_df.patient.isin(UNKNOWN_DIAGNOSES)).values
-        samples_df = samples_df[diagnosis_filter].reset_index(drop=True)
-        data = data[diagnosis_filter]
+        unknown_diagnoses_file = os.path.join(
+            data_args.data_path, UNKNOWN_DIAGNOSES_FILE
+        )
+        with open(unknown_diagnoses_file) as f:
+            print("Removing patients with unknown diagnosis")
+            unknown_diagnoses = json.load(f)
+            diagnosis_filter = ~(samples_df.patient.isin(unknown_diagnoses)).values
+            samples_df = samples_df[diagnosis_filter].reset_index(drop=True)
+            data = data[diagnosis_filter]
 
     print("Filtering YAO data")
     position_filter = samples_df.position.isin([f"P{i + 1}" for i in range(8)])

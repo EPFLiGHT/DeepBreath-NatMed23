@@ -5,12 +5,14 @@
     "transform": "logmel",
     "n_fft": 256,
     "hop_length": 64,
+    "center": true,
     "n_mels": 32,
     "fmin": 250,
     "fmax": 750,
     "out_path": "../out",
     "do_train": true,
     "online_logging": false,
+    "model_name": "dense",
     "target": [
         0
     ],
