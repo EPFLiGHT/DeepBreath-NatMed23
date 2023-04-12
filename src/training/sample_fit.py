@@ -173,7 +173,7 @@ def evaluate(model, val_loader, criterion, device):
     position_df["output"] = 0.0
 
     with torch.no_grad():
-        for batch_idx, batch_dict in enumerate(val_loader):  # added
+        for batch_dict in val_loader:  # added
             # Load the input features and labels from the val dataset
             sample_idx = batch_dict["sample_idx"]
             data = batch_dict["data"].to(device)

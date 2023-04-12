@@ -1,6 +1,4 @@
 SEED = 42
-RATE = 4000
-MAX_DURATION = 30
 
 PATIENT_DF_FILE = "patient_df.csv"
 SAMPLES_DF_FILE = "samples_df.csv"
