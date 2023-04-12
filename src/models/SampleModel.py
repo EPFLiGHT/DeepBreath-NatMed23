@@ -4,8 +4,6 @@ import torch.nn.functional as F
 from torchaudio.transforms import Spectrogram, MelSpectrogram, AmplitudeToDB, MFCC
 from torchlibrosa.augmentation import SpecAugmentation
 
-from .Cnn6 import Cnn6
-from .Cnn10 import Cnn10
 from .Cnn10Att import Cnn10Att
 
 
@@ -111,42 +109,7 @@ def init_bn(bn):
     bn.weight.data.fill_(1.0)
 
 
-class Classifier(nn.Module):
-    def __init__(self, n_feats, fc_features, classes_num, dropout):
-        super(Classifier, self).__init__()
-
-        self.dropout = dropout
-        self.fc1 = nn.Linear(n_feats, fc_features, bias=True)
-        self.fc2 = nn.Linear(fc_features, classes_num, bias=True)
-
-        self.init_weight()
-
-    def init_weight(self):
-        init_layer(self.fc1)
-        init_layer(self.fc2)
-
-    def forward(self, x):
-        x = F.dropout(x, p=self.dropout, training=self.training)
-
-        # x = torch.flatten(x, start_dim=1)
-        x = F.relu(self.fc1(x))
-        # x = F.dropout(x, p=self.dropout, training=self.training)
-
-        out = torch.sigmoid(self.fc2(x))
-
-        return out
-
-
 class SampleModel(nn.Module):
-    """
-    n_feats=64,
-    conv_channels=32,
-    fc_features=64,
-    classes_num=1,
-    conv_dropout=0.2,
-    fc_dropout=0.5,
-    """
-
     def __init__(self, audio_config, model_config):
         super(SampleModel, self).__init__()
 
@@ -164,28 +127,7 @@ class SampleModel(nn.Module):
             freq_stripes_num=2,
         )
 
-        feature_model = model_config.model_name
-        self.feature_model = feature_model
-
-        if feature_model == "cnn6":
-            self.features = Cnn6(
-                conv_channels=model_config.conv_channels,
-                dropout=model_config.conv_dropout,
-            )
-        elif feature_model == "cnn10":
-            self.features = Cnn10(
-                conv_channels=model_config.conv_channels,
-                dropout=model_config.conv_dropout,
-            )
-        elif feature_model == "dense":
-            self.features = Cnn10Att(classes_num=model_config.classes_num)
-
-        self.classifier = Classifier(
-            n_feats=8 * model_config.conv_channels,
-            fc_features=model_config.fc_features,
-            classes_num=model_config.classes_num,
-            dropout=model_config.fc_dropout,
-        )
+        self.features = Cnn10Att(classes_num=model_config.classes_num)
 
         self.init_weight()
 
@@ -211,26 +153,10 @@ class SampleModel(nn.Module):
         return x
 
     def forward(self, x):
+        # Audio Preprocessing
         x = self.preprocess(x)
 
-        if self.feature_model == "dense":
-            out = self.features(x)
-            output_dict = {
-                "diagnosis_output": out["clipwise_output"],
-                "framewise_output": out["framewise_output"],
-                "framewise_att": out["framewise_att"],
-            }
-        else:
-            sample_features = self.features(x)
-            sample_features = feature_pooling(sample_features)
+        # Prediction and Feature Extraction
+        out = self.features(x)
 
-            out = sample_features
-
-            diagnosis_out = self.classifier(out)
-
-            output_dict = {
-                "diagnosis_output": diagnosis_out,
-                "embedding": sample_features,
-            }
-
-        return output_dict
+        return out

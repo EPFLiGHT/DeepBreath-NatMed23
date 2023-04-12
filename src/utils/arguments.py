@@ -147,11 +147,6 @@ class ModelArguments:
         metadata={"help": ("TODO")},
     )
 
-    conv_channels: int = field(
-        default=32,
-        metadata={"help": ("TODO")},
-    )
-
     fc_features: int = field(
         default=128,
         metadata={"help": ("TODO")},
