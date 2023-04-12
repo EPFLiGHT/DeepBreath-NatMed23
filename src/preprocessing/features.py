@@ -194,12 +194,12 @@ feature_fcts = {
 
 class AudioFeatures:
     def __init__(self, features, config):
-        for pre in config.preprocessing:
+        for pre in config["preprocessing"]:
             assert pre in preprocessing_fcts.keys()
         for feat in features:
             assert feat in feature_fcts.keys()
 
-        self.preprocessing = config.preprocessing
+        self.preprocessing = config["preprocessing"]
         self.features = features
         self.config = config
 

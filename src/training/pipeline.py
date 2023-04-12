@@ -35,20 +35,20 @@ def make_sample_loader(ds, train_args):
 
 
 def make_optimizer(params, train_args):
-    if optimizer == "sgd":
+    if train_args.optimizer_name == "sgd":
         optimizer = torch.optim.SGD(
             params=params,
             momentum=train_args.momentum,
             lr=train_args.learning_rate,
             weight_decay=train_args.weight_decay,
         )
-    elif optimizer == "adam":
+    elif train_args.optimizer_name == "adam":
         optimizer = torch.optim.Adam(
             params=params,
             lr=train_args.learning_rate,
             weight_decay=train_args.weight_decay,
         )
-    elif optimizer == "adamw":
+    elif train_args.optimizer_name == "adamw":
         optimizer = torch.optim.AdamW(
             params=params,
             lr=train_args.learning_rate,
@@ -124,10 +124,7 @@ def make_features(
     model_name = model_args.model_name
     target_str = "+".join([str(t) for t in train_args.target])
 
-    max_samples = int(
-        audio_args.config.split_config["sr"]
-        * audio_args.config.split_config["max_duration"]
-    )
+    max_samples = int(audio_args.sr * audio_args.max_duration)
     max_stft_samples = (max_samples // audio_args.hop_length) + 1
     frame_values = np.zeros((len(samples_df), max_stft_samples + 1))
     attention_values = np.zeros((len(samples_df), max_stft_samples + 1))

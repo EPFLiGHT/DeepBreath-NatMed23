@@ -325,6 +325,7 @@ def experiment(data_args, audio_args, model_args, train_args, online=False):
                 audio_args,
                 model_args,
                 train_args,
+                device,
             )
             print()
 

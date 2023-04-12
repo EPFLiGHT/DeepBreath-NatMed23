@@ -194,11 +194,6 @@ class TrainingArguments:
         metadata={"help": ("TODO")},
     )
 
-    target: List[int] = field(
-        default_factory=list,
-        metadata={"help": ("TODO")},
-    )
-
     train_loc: List[str] = field(
         default_factory=lambda: ["GVA", "POA"],
         metadata={"help": ("TODO")},
