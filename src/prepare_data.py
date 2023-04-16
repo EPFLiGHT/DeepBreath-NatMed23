@@ -1,16 +1,16 @@
-import argparse
+import os
+import random
+import sys
+
 import librosa
 import numpy as np
 import pandas as pd
-import random
-from os import listdir
-from os.path import join
+from transformers import HfArgumentParser
 
 from preprocessing.helpers import prepare_data
+from utils.arguments import DataArguments, AudioArguments
 from utils.constants import (
     SEED,
-    RATE,
-    MAX_DURATION,
     PATIENT_DF_FILE,
     SAMPLES_DF_FILE,
     AUDIO_DATA_FILE,
@@ -27,28 +27,35 @@ random.seed(SEED)  # python random seed
 np.random.seed(SEED)  # numpy random seedimport numpy as np
 
 
-def get_samples(patient_df, out_path, audio_array_path, audio_meta_path):
-    sample_length = MAX_DURATION * RATE
+def get_samples(
+    patient_df,
+    sr,
+    max_duration,
+    interim_path,
+    audio_data_path,
+    samples_df_path,
+):
+    sample_length = int(sr * max_duration)
 
-    audio_dataset = []
+    audio_data = []
     samples_df = []
 
     for _, r in patient_df.iterrows():
         patient_id = r.patient
         print(patient_id)
 
-        audio_folder = join(out_path, patient_id, "audio")
-        audio_files = sorted([f for f in listdir(audio_folder)])
+        audio_folder = os.path.join(interim_path, patient_id, "audio")
+        audio_files = sorted([f for f in os.listdir(audio_folder)])
 
         for f in audio_files:
-            filename = join(audio_folder, f)
-            samples, sr = librosa.load(filename, sr=None, duration=MAX_DURATION)
+            filename = os.path.join(audio_folder, f)
+            samples, file_sr = librosa.load(filename, sr=None, duration=max_duration)
             n_samples = samples.size
-            assert sr == RATE
+            assert file_sr == sr
 
             # Add sample to dataset
             samples = librosa.util.fix_length(samples, size=sample_length)
-            audio_dataset.append(samples)
+            audio_data.append(samples)
             code = f.split(".")[0]
             position = code.split("_")[3]
             new_sample = dict(r)
@@ -57,64 +64,47 @@ def get_samples(patient_df, out_path, audio_array_path, audio_meta_path):
             new_sample["end"] = n_samples
             samples_df.append(new_sample)
 
-    audio_dataset = np.array(audio_dataset)
-    np.save(audio_array_path, audio_dataset)
+    audio_data = np.array(audio_data)
+    np.save(audio_data_path, audio_data)
 
     samples_df = pd.DataFrame(samples_df)
-    samples_df.to_csv(audio_meta_path, index=False)
+    samples_df.to_csv(samples_df_path, index=False)
+
+
+def main():
+    parser = HfArgumentParser((DataArguments, AudioArguments))
+    if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
+        data_args, audio_args = parser.parse_json_file(
+            json_file=os.path.abspath(sys.argv[1])
+        )
+    else:
+        data_args, audio_args = parser.parse_args_into_dataclasses()
+
+    sr, max_duration = audio_args.sr, audio_args.max_duration
+    # import pdb; pdb.set_trace()
+    project_locations = {
+        "As": data_args.asthmoscope_locations,
+        "Pn": data_args.pneumoscope_locations,
+    }
+
+    patient_df_path = os.path.join(data_args.processed_path, PATIENT_DF_FILE)
+    audio_data_path = os.path.join(data_args.processed_path, AUDIO_DATA_FILE)
+    samples_df_path = os.path.join(data_args.processed_path, SAMPLES_DF_FILE)
+
+    patient_df = prepare_data(
+        data_args.data_path, project_locations, out_path=data_args.interim_path
+    )
+    patient_df.to_csv(patient_df_path, index=False)
+
+    get_samples(
+        patient_df=patient_df,
+        sr=sr,
+        max_duration=max_duration,
+        interim_path=data_args.interim_path,
+        audio_data_path=audio_data_path,
+        samples_df_path=samples_df_path,
+    )
 
 
 if __name__ == "__main__":
-    # Defines all parser arguments when launching the script directly in terminal
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-al",
-        "--asthmoscope_locations",
-        nargs="+",
-        help="Asthmoscope study centres used to create a dataset",
-    )
-    parser.add_argument(
-        "-pl",
-        "--pneumoscope_locations",
-        nargs="+",
-        help="Pneumoscope study centres used to create a dataset",
-    )
-    parser.add_argument(
-        "-dp",
-        "--download_path",
-        type=str,
-        default="../data/raw/canonical_data/pediatric_studies",
-        help="Path to downloaded data",
-    )
-    parser.add_argument(
-        "-op",
-        "--out_path",
-        type=str,
-        default="../data",
-        help="Destination folder for selected recordings",
-    )
-    args = parser.parse_args()
-
-    project_locations = {
-        "As": args.asthmoscope_locations
-        if args.asthmoscope_locations is not None
-        else ["GVA"],
-        "Pn": args.pneumoscope_locations
-        if args.pneumoscope_locations is not None
-        else ["GVA", "POA", "DKR", "MAR", "RBA", "YAO"],
-    }
-    _download_path = args.download_path
-    _out_path = args.out_path
-    _interim_path = join(_out_path, "interim")
-    _patient_path = join(_out_path, "processed", PATIENT_DF_FILE)
-    _audio_array_path = join(_out_path, "processed", AUDIO_DATA_FILE)
-    _audio_meta_path = join(_out_path, "processed", SAMPLES_DF_FILE)
-
-    _patient_df = prepare_data(
-        _download_path, project_locations, out_path=_interim_path
-    )
-    import pdb
-
-    pdb.set_trace()
-    _patient_df.to_csv(_patient_path, index=False)
-    get_samples(_patient_df, _interim_path, _audio_array_path, _audio_meta_path)
+    main()

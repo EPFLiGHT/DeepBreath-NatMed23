@@ -1,4 +1,4 @@
-from os.path import join
+import os
 from pathlib import Path
 
 import numpy as np
@@ -9,22 +9,23 @@ from torch.utils.data import DataLoader
 from data.dataset import AudioDataset
 from data.sampler import BalancedSampler
 from models.SampleModel import SampleModel
+from utils.helpers import get_model_file, get_output_file, get_attention_file
 
 
-def make_sample_loader(ds, config):
-    batch_size = config.batch_size
+def make_sample_loader(ds, train_args):
+    batch_size = train_args.batch_size
 
-    if config.balanced_sampling:
+    if train_args.balanced_sampling:
         balanced_sampler = BalancedSampler(
             ds.samples_df,
-            pos_label=config.target,
+            pos_label=train_args.target,
             label_col="diagnosis",
             additional_cols=["location"],
         )
         data_loader = DataLoader(
             ds,
             batch_sampler=balanced_sampler.get_sampler(
-                batch_size=batch_size, alpha=config.sampling_alpha
+                batch_size=batch_size, alpha=train_args.sampling_alpha
             ),
         )
     else:
@@ -33,13 +34,26 @@ def make_sample_loader(ds, config):
     return data_loader
 
 
-def make_optimizer(model, optimizer, parameters):
-    if optimizer == "sgd":
-        optimizer = torch.optim.SGD(model.parameters(), momentum=0.9, **parameters)
-    elif optimizer == "adam":
-        optimizer = torch.optim.Adam(model.parameters(), **parameters)
-    elif optimizer == "adamw":
-        optimizer = torch.optim.AdamW(model.parameters(), **parameters)
+def make_optimizer(params, train_args):
+    if train_args.optimizer_name == "sgd":
+        optimizer = torch.optim.SGD(
+            params=params,
+            momentum=train_args.momentum,
+            lr=train_args.learning_rate,
+            weight_decay=train_args.weight_decay,
+        )
+    elif train_args.optimizer_name == "adam":
+        optimizer = torch.optim.Adam(
+            params=params,
+            lr=train_args.learning_rate,
+            weight_decay=train_args.weight_decay,
+        )
+    elif train_args.optimizer_name == "adamw":
+        optimizer = torch.optim.AdamW(
+            params=params,
+            lr=train_args.learning_rate,
+            weight_decay=train_args.weight_decay,
+        )
 
     return optimizer
 
@@ -49,8 +63,10 @@ def make_loss():
     return criterion
 
 
-def make_sample_model(samples_df, data, fold_1, fold_2, config, device):
-    loc_selection = (samples_df.location.isin(config.train_loc)).values
+def make_sample_model(
+    samples_df, data, fold_1, fold_2, audio_args, model_args, train_args, device
+):
+    loc_selection = (samples_df.location.isin(train_args.train_loc)).values
     samples_df = samples_df[loc_selection].reset_index(drop=True)
     data = data[loc_selection]
 
@@ -60,65 +76,63 @@ def make_sample_model(samples_df, data, fold_1, fold_2, config, device):
 
     train_ds = AudioDataset(
         samples_df[train_indices],
+        target=train_args.target,
         data=data[train_indices],
-        target=config.target,
-        preprocessing=config.preprocessing,
-        pre_config=config.pre_config,
-        split_config=config.split_config,
+        audio_args=audio_args,
     )
     ds_1 = AudioDataset(
         samples_df[indices_1],
+        target=train_args.target,
         data=data[indices_1],
-        target=config.target,
-        preprocessing=config.preprocessing,
-        pre_config=config.pre_config,
-        split_config=config.split_config,
+        audio_args=audio_args,
         train=False,
     )
     ds_2 = AudioDataset(
         samples_df[indices_2],
+        target=train_args.target,
         data=data[indices_2],
-        target=config.target,
-        preprocessing=config.preprocessing,
-        pre_config=config.pre_config,
-        split_config=config.split_config,
+        audio_args=audio_args,
         train=False,
     )
 
-    train_loader = make_sample_loader(train_ds, config)
+    train_loader = make_sample_loader(train_ds, train_args)
     loader_1 = DataLoader(ds_1, batch_size=1, shuffle=False)
     loader_2 = DataLoader(ds_2, batch_size=1, shuffle=False)
 
     # Make the model
-    model = SampleModel(**config.network).to(device)
+    model = SampleModel(audio_config=audio_args, model_config=model_args).to(device)
 
     # Make the loss and optimizer
     criterion = make_loss()
-    optimizer = make_optimizer(
-        model, config.optimizer["name"], config.optimizer["parameters"]
-    )
+    optimizer = make_optimizer(model.parameters(), train_args)
 
     return model, train_loader, loader_1, loader_2, optimizer, criterion
 
 
-def make_features(samples_df, data_loader, val_fold, test_fold, config, device):
-    outputs = np.zeros(len(samples_df))
-    target_str = "+".join([str(t) for t in config.target])
+def make_features(
+    samples_df,
+    data_loader,
+    val_fold,
+    test_fold,
+    audio_args,
+    model_args,
+    train_args,
+    device,
+):
 
-    max_samples = int(config.split_config["sr"] * config.split_config["max_duration"])
-    max_stft_samples = (max_samples // config.feat_config["hop_length"]) + 1
+    outputs = np.zeros(len(samples_df))
+    model_name = model_args.model_name
+    target_str = "+".join([str(t) for t in train_args.target])
+
+    max_samples = int(audio_args.sr * audio_args.max_duration)
+    max_stft_samples = (max_samples // audio_args.hop_length) + 1
     frame_values = np.zeros((len(samples_df), max_stft_samples + 1))
     attention_values = np.zeros((len(samples_df), max_stft_samples + 1))
 
-    model = SampleModel(**config.network).to(device)
-    model_dir = join(config.out_folder, "models")
-    model_file = join(
-        model_dir,
-        config.model_file.format(
-            config.network["feature_model"], target_str, val_fold, test_fold
-        ),
-    )
-    model.load_state_dict(torch.load(model_file, map_location=device))
+    model = SampleModel(audio_config=audio_args, model_config=model_args).to(device)
+    model_file = get_model_file(model_name, target_str, val_fold, test_fold)
+    model_path = os.path.join(train_args.out_path, "models", model_file)
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
 
     with torch.no_grad():
@@ -146,27 +160,19 @@ def make_features(samples_df, data_loader, val_fold, test_fold, config, device):
                 attention_values[sample_idx, :n_frames] = framewise_att
                 attention_values[sample_idx, -1] = n_frames
 
-    if config.save_outputs:
+    if train_args.save_outputs:
         # Create folder if it does not exist
-        out_dir = join(config.out_folder, "features")
-        Path(out_dir).mkdir(parents=True, exist_ok=True)
+        feature_dir = os.path.join(train_args.out_path, "features")
+        Path(feature_dir).mkdir(parents=True, exist_ok=True)
 
         # Save model outputs
-        output_file = join(
-            out_dir,
-            config.output_file.format(
-                config.network["feature_model"], target_str, val_fold, test_fold
-            ),
-        )
+        output_file = get_output_file(model_name, target_str, val_fold, test_fold)
+        output_file = os.path.join(feature_dir, output_file)
         np.save(output_file, outputs)
 
         # Save model attention values
-        attn_file = join(
-            out_dir,
-            config.attn_file.format(
-                config.network["feature_model"], target_str, val_fold, test_fold
-            ),
-        )
+        attn_file = get_attention_file(model_name, target_str, val_fold, test_fold)
+        attn_file = os.path.join(feature_dir, attn_file)
         np.save(attn_file, attention_values)
 
     return outputs

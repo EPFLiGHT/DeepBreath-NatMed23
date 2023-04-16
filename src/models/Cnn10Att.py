@@ -1,3 +1,7 @@
+# This code was adapted from https://github.com/ryanwongsa/kaggle-birdsong-recognition/blob/master/src/models/sed_models.py,
+# which is licensed under the MIT license. The original author of this code is Ryan Wong (https://github.com/ryanwongsa).
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -161,21 +165,11 @@ class Cnn10Att(nn.Module):
         self.conv_block3 = ConvBlock(in_channels=128, out_channels=256)
         self.conv_block4 = ConvBlock(in_channels=256, out_channels=512)
         self.conv_block5 = ConvBlock(in_channels=512, out_channels=1024)
-        # self.conv_block6 = ConvBlock(in_channels=1024, out_channels=2048)
-
-        """self.conv_block1 = ConvBlock(in_channels=1, out_channels=32)
-        self.conv_block2 = ConvBlock(in_channels=32, out_channels=64)
-        self.conv_block3 = ConvBlock(in_channels=64, out_channels=128)
-        self.conv_block4 = ConvBlock(in_channels=128, out_channels=256)
-        self.conv_block5 = ConvBlock(in_channels=256, out_channels=512)
-        self.conv_block6 = ConvBlock(in_channels=512, out_channels=1024)"""
 
         self.fc1 = nn.Linear(1024, 1024, bias=True)
         self.att_block = AttBlock(
             1024, classes_num, activation="linear"
         )  # 'sigmoid' 'linear'
-        """self.fc1 = nn.Linear(2048, 2048, bias=True)
-        self.att_block = AttBlock(2048, classes_num, activation='sigmoid')"""
 
         self.init_weight()
 
@@ -191,14 +185,8 @@ class Cnn10Att(nn.Module):
         x = F.dropout(x, p=0.2, training=self.training)
         x = self.conv_block4(x, pool_size=(2, 2), pool_type="avg")
         x = F.dropout(x, p=0.2, training=self.training)
-        """x = self.conv_block5(x, pool_size=(2, 2), pool_type='avg')
-        x = F.dropout(x, p=0.2, training=self.training)"""
         x = self.conv_block5(x, pool_size=(1, 1), pool_type="avg")
         x = F.dropout(x, p=0.2, training=self.training)
-        """x = self.conv_block5(x, pool_size=(2, 1), pool_type='avg')
-        x = F.dropout(x, p=0.2, training=self.training)
-        x = self.conv_block6(x, pool_size=(1, 1), pool_type='avg')
-        x = F.dropout(x, p=0.2, training=self.training)"""
         return x
 
     def forward(self, x):  # input, mixup_lambda=None
@@ -242,7 +230,7 @@ class Cnn10Att(nn.Module):
         ).squeeze()  # added
 
         output_dict = {
-            "clipwise_output": clipwise_output,
+            "diagnosis_output": clipwise_output,
             "framewise_output": framewise_output,
             "framewise_att": framewise_att,
         }
