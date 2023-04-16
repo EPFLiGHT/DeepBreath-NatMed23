@@ -29,80 +29,45 @@ Attention plots show a clear alignment between model prediction and independentl
 
 ## Usage
 
-This repository contains the code for training and testing the DeepBreath model on lung auscultation recordings. It includes the data preprocessing and augmentation scripts, the model architecture, training and testing scripts, and the attention plot generation script. The code was written in Python (version 3.7.4) and relies on several third-party packages, which are listed in the `requirements.txt` file.
+This repository contains the code for training and testing the DeepBreath model on lung auscultation recordings. It includes the data preprocessing and augmentation scripts, the model architecture, training and testing scripts, and the code to generate the attention plots. The code was written in Python (version 3.7.4) and relies on several third-party packages, which are listed in the `requirements.txt` file.
 
 ## Installation
 
-   1. Clone the repository
-   2. Install the required packages using pip: `pip install -r requirements.txt`
+   - Clone the repository
+   - Install the required packages using pip: `pip install -r requirements.txt`
 
 ## Data
 
-The lung auscultation recordings used to train and test the DeepBreath model are not included in this repository due to privacy concerns. However, the data preprocessing and augmentation scripts are included, so it is possible to preprocess your own lung auscultation recordings and train the model on them.
+Anonymized data are available upon reasonable request which matches the intention to improve the diagnosis of paediatric respiratory disease in resource-limited settings. The audio used in the study are not publicly available to protect participant privacy. Unlimited further use is not permissible from the informed consent. The data preprocessing and augmentation scripts are included, so it is possible to preprocess your own lung auscultation recordings and train the model on them.
 
 ## Training
 
-To train the DeepBreath model on your own lung auscultation recordings, move to the `src/` folder and follow these steps:
+Move to the `src/` folder for data preparation and model training. 
 
-   3. Preprocess and augment the data using the `prepare_data.py` script
-   4. Train the model using the `train_audio_classifier.py` script
+The data that were used to train the DeepBreath models were preprocessed using the `prepare_data.py` script. The script was designed specifically for the DeepBreath dataset, it contains dataset-specific arguments (e.g. `--asthmoscope_locations` and `--pneumoscope_locations`) and should not be used to preprocess another dataset unless modified accordingly. 
 
-## Project Organization
-------------
+To train a DeepBreath model using the `train_audio_classifier.py` script, you need to provide a configuration file in JSON format. The configuration file specifies the data paths, hyperparameters, and other settings for the training process.
 
-    ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── notebooks          <- Jupyter notebooks.
-    │
-    ├── out                
-    │   ├── aggregate      <- 
-    │   ├── features       <- 
-    │   └── models         <- Trained and serialized models
-    │
-    ├── report             <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    └── src                <- Source code for use in this project.
-        ├── data
-        │   ├── dataset.py
-        │   └── sampler.py
-        │
-        ├── models
-        │   ├── Cnn10Att.py
-        │   ├── Cnn10.py
-        │   ├── Cnn6.py
-        │   └── SampleModel.py
-        │
-        ├── prepare_data.py
-        │
-        ├── preprocessing
-        │   ├── features.py
-        │   └── helpers.py
-        │
-        ├── train_audio_classifier.py
-        │
-        ├── training
-        │   ├── pipeline.py
-        │   └── sample_fit.py
-        │
-        └── utils
-           ├── config.py
-           └── constants.py
---------
+In the `configs/` sub-folder, you can find four pre-defined configuration files that were used to train the binary classification models for four clinical diagnostic categories: 
+   - `0_control.json`
+   - `1_pneumonia.json`
+   - `2_wheezing.json`
+   - `3_bronchiolitis.json`
 
+To use one of these configuration files, simply pass the file path as an argument when running the `train_audio_classifier.py` script. For example, to train a model that discriminates between samples of the wheezing disorder class and samples of the remaining three classes, you can run the following command from the command line:
+
+```
+python train_audio_classifier.py configs/2_wheezing.json
+```
+
+This will start the training process using the specified configuration file. You can modify the configuration files or create your own to customize the training process for your own needs.
+
+  
 ## License
 
 The code in this repository is released under the Apache-2.0 license. See the `LICENSE` file for more details.
 
+<!---
 ## Contact
 
 If you have any questions or comments about this code, please contact **TODO**.
@@ -110,3 +75,4 @@ If you have any questions or comments about this code, please contact **TODO**.
 ## Citation
 
 If you use this code in your research, please cite the following paper: **TODO**.
+-->

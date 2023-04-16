@@ -1,3 +1,6 @@
+# This code was adapted from https://github.com/khornlund/pytorch-balanced-sampler/blob/master/pytorch_balanced_sampler/sampler.py
+# The original author of this code is Karl Hornlund (https://github.com/khornlund).
+
 import numpy as np
 from torch.utils.data.sampler import BatchSampler, WeightedRandomSampler
 
@@ -12,10 +15,6 @@ def balance_weights(weight_a, weight_b, alpha):
 
 
 class BalancedSampler:
-    """
-    Factory class to create balanced samplers.
-    """
-
     def __init__(self, df, pos_label, label_col="diagnosis", additional_cols=[]):
         by = [label_col] + additional_cols
         grouped_samples = (
@@ -46,26 +45,6 @@ class BalancedSampler:
         return class_sizes, weights
 
     def get_sampler(self, batch_size, n_batches=None, alpha=0.5):
-        """
-        Parameters
-        ----------
-        class_idxs : 2D list of ints
-            List of sample indices for each class. Eg. [[0, 1], [2, 3]] implies indices 0, 1
-            belong to class 0, and indices 2, 3 belong to class 1.
-
-        batch_size : int
-            The batch size to use.
-
-        n_batches : int
-            The number of batches per epoch.
-
-        alpha : numeric in range [0, 1]
-            Weighting term used to determine weights of each class in each batch.
-            When `alpha` == 0, the batch class distribution will approximate the training population
-            class distribution.
-            When `alpha` == 1, the batch class distribution will approximate a uniform distribution,
-            with equal number of samples from each class.
-        """
         n_samples = self.grouped_samples["size"].sum()
         class_idxs = self.grouped_samples["list"].values.tolist()
         class_sizes, weights = self._weight_classes(class_idxs, alpha)
@@ -90,24 +69,6 @@ class BalancedSampler:
 
 
 class WeightedRandomBatchSampler(BatchSampler):
-    """
-    Samples with replacement according to the provided weights.
-
-    Parameters
-    ----------
-    class_weights : `numpy.array(int)`
-        The number of samples of each class to include in each batch.
-
-    class_idxs : 2D list of ints
-        The indices that correspond to samples of each class.
-
-    batch_size : int
-        The size of each batch yielded.
-
-    n_batches : int
-        The number of batches to yield.
-    """
-
     def __init__(self, class_weights, class_idxs, batch_size, n_batches):
         self.sample_idxs = []
         for idxs in class_idxs:

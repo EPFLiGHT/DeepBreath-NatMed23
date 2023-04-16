@@ -85,24 +85,6 @@ class AudioFrontend(nn.Module):
         return out
 
 
-def feature_pooling(x):
-    x = torch.mean(x, dim=3)  # Average over mel-bins
-    (x1, _) = torch.max(x, dim=2)  # Max over time
-    x2 = torch.mean(x, dim=2)  # Average over time
-    x = x1 + x2
-
-    return x
-
-
-def init_layer(layer):
-    """Initialize a Linear or Convolutional layer."""
-    nn.init.xavier_uniform_(layer.weight)
-
-    if hasattr(layer, "bias"):
-        if layer.bias is not None:
-            layer.bias.data.fill_(0.0)
-
-
 def init_bn(bn):
     """Initialize a Batchnorm layer."""
     bn.bias.data.fill_(0.0)

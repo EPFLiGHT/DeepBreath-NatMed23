@@ -49,9 +49,9 @@ def get_samples(
 
         for f in audio_files:
             filename = os.path.join(audio_folder, f)
-            samples, sr = librosa.load(filename, sr=None, duration=max_duration)
+            samples, file_sr = librosa.load(filename, sr=None, duration=max_duration)
             n_samples = samples.size
-            assert sr == sr
+            assert file_sr == sr
 
             # Add sample to dataset
             samples = librosa.util.fix_length(samples, size=sample_length)

@@ -1,3 +1,7 @@
+# This code was adapted from https://github.com/ryanwongsa/kaggle-birdsong-recognition/blob/master/src/models/sed_models.py,
+# which is licensed under the MIT license. The original author of this code is Ryan Wong (https://github.com/ryanwongsa).
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
