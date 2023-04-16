@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torchaudio.transforms import Spectrogram, MelSpectrogram, AmplitudeToDB, MFCC
 from torchlibrosa.augmentation import SpecAugmentation
 
