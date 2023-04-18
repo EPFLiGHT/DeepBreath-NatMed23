@@ -62,6 +62,8 @@ python train_audio_classifier.py configs/2_wheezing.json
 
 This will start the training process using the specified configuration file. You can modify the configuration files or create your own to customize the training process for your own needs.
 
+To compute predictions based on the first (2.5, 5.0, ..., 30.0) seconds of your recordings, you can run the `duration_experiments.py` script.
+It uses the same input arguments as `train_audio_classifier.py`.
   
 ## License
 
