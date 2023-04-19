@@ -9,7 +9,7 @@ DeepBreath-NatMed23
 ==============================
 
 [![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](https://github.com/epfl-iglobalhealth/DeepBreath-NatMed23/blob/main/LICENSE)
-[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-370/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/release/python-3100/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
@@ -29,7 +29,7 @@ Attention plots show a clear alignment between model prediction and independentl
 
 ## Usage
 
-This repository contains the code for training and testing the DeepBreath model on lung auscultation recordings. It includes the data preprocessing and augmentation scripts, the model architecture, training and testing scripts, and the code to generate the attention plots. The code was written in Python (version 3.7.4) and relies on several third-party packages, which are listed in the `requirements.txt` file.
+This repository contains the code for training and testing the DeepBreath model on lung auscultation recordings. It includes the data preprocessing and augmentation scripts, the model architecture, training and testing scripts, and the code to generate the attention plots. The code was written in **Python 3.10** and relies on several third-party packages, which are listed in the `requirements.txt` file.
 
 ## Installation
 
@@ -62,6 +62,8 @@ python train_audio_classifier.py configs/2_wheezing.json
 
 This will start the training process using the specified configuration file. You can modify the configuration files or create your own to customize the training process for your own needs.
 
+To compute predictions based on the first (2.5, 5.0, ..., 30.0) seconds of your recordings, you can run the `duration_experiments.py` script.
+It uses the same input arguments as `train_audio_classifier.py`.
   
 ## License
 
