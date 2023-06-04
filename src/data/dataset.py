@@ -4,17 +4,21 @@ import torch
 from torch.utils.data import Dataset
 
 from preprocessing.features import AudioFeatures
+from numpy import ndarray
+from pandas.core.frame import DataFrame
+from typing import Dict, List
+from utils.arguments import AudioArguments
 
 
 class AudioDataset(Dataset):
     def __init__(
         self,
-        samples_df,
-        target,
-        data,
-        audio_args,
-        train=True,
-    ):
+        samples_df: DataFrame,
+        target: List[int],
+        data: ndarray,
+        audio_args: AudioArguments,
+        train: bool=True,
+    ) -> None:
         self.audio_args = audio_args
 
         self.samples_df = samples_df.reset_index().rename(
@@ -41,7 +45,7 @@ class AudioDataset(Dataset):
     def samples_df(self, df):
         self._samples_df = df
 
-    def _preprocess_data(self, data):
+    def _preprocess_data(self, data: ndarray) -> ndarray:
         filters = AudioFeatures(features=[], config=dataclasses.asdict(self.audio_args))
         preprocessed_data = np.zeros(data.shape)
         for i, n_samples in enumerate(self.samples_df.end.values):
@@ -54,10 +58,10 @@ class AudioDataset(Dataset):
         class_sample_count = np.unique(self.samples_df["label"], return_counts=True)[1]
         return torch.from_numpy(class_sample_count.astype(np.float32))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.samples_df)
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: int) -> Dict[str,     torch.Tensor]:
         y = np.array([self.samples_df["label"].values[i]]).astype(np.float32)
 
         sample_length = int(self.audio_args.sr * self.audio_args.split_duration)

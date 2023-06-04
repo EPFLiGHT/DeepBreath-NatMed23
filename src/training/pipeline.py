@@ -10,9 +10,19 @@ from data.dataset import AudioDataset
 from data.sampler import BalancedSampler
 from models.SampleModel import SampleModel
 from utils.helpers import get_model_file, get_output_file, get_attention_file
+import torch.utils.data.dataloader
+from nn.modules.loss import BCELoss
+from numpy import ndarray
+from optim.adamw import AdamW
+from pandas.core.frame import DataFrame
+from torch.nn.modules.loss import BCELoss
+from torch.optim.adamw import AdamW
+from typing import Any, Iterator, Tuple
+from utils.arguments import AudioArguments, ModelArguments, TrainingArguments
+from utils.data.dataloader import DataLoader
 
 
-def make_sample_loader(ds, train_args):
+def make_sample_loader(ds: AudioDataset, train_args: TrainingArguments) -> torch.utils.data.dataloader.DataLoader:
     batch_size = train_args.batch_size
 
     if train_args.balanced_sampling:
@@ -34,7 +44,7 @@ def make_sample_loader(ds, train_args):
     return data_loader
 
 
-def make_optimizer(params, train_args):
+def make_optimizer(params: Iterator[Any], train_args: TrainingArguments) -> AdamW:
     if train_args.optimizer_name == "sgd":
         optimizer = torch.optim.SGD(
             params=params,
@@ -58,14 +68,14 @@ def make_optimizer(params, train_args):
     return optimizer
 
 
-def make_loss():
+def make_loss() -> BCELoss:
     criterion = nn.BCELoss()
     return criterion
 
 
 def make_sample_model(
-    samples_df, data, fold_1, fold_2, audio_args, model_args, train_args, device
-):
+    samples_df: DataFrame, data: ndarray, fold_1: int, fold_2: int, audio_args: AudioArguments, model_args: ModelArguments, train_args: TrainingArguments, device: torch.device
+) -> Tuple[SampleModel, DataLoader, DataLoader, DataLoader, AdamW, BCELoss]:
     loc_selection = (samples_df.location.isin(train_args.train_loc)).values
     samples_df = samples_df[loc_selection].reset_index(drop=True)
     data = data[loc_selection]
@@ -110,15 +120,15 @@ def make_sample_model(
 
 
 def make_features(
-    samples_df,
-    data_loader,
-    val_fold,
-    test_fold,
-    audio_args,
-    model_args,
-    train_args,
-    device,
-):
+    samples_df: DataFrame,
+    data_loader: torch.utils.data.dataloader.DataLoader,
+    val_fold: int,
+    test_fold: int,
+    audio_args: AudioArguments,
+    model_args: ModelArguments,
+    train_args: TrainingArguments,
+    device: torch.device,
+) -> ndarray:
 
     outputs = np.zeros(len(samples_df))
     model_name = model_args.model_name
