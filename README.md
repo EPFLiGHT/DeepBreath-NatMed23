@@ -12,6 +12,10 @@ DeepBreath-NatMed23
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/release/python-3100/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+This is code accompanying the publication
+
+> J. Heitmann et al. [DeepBreath---automated detection of respiratory pathology from lung auscultation in 572 pediatric outpatients across 5 countries](https://www.nature.com/articles/s41746-023-00838-3).
+*npj Digital Medicine* **6** (2023)
 
 Lung auscultation is an essential clinical exam in the evaluation of respiratory diseases, but it is subjective and relies on non-specific nomenclature. Computer-aided analysis has the potential to standardize and automate evaluation, making it more accessible to low-resource and remote care settings. In this repository, we present DeepBreath, a deep learning model that recognizes audible signatures of pediatric respiratory diseases.
 
@@ -69,12 +73,19 @@ It uses the same input arguments as `train_audio_classifier.py`.
 
 The code in this repository is released under the Apache-2.0 license. See the `LICENSE` file for more details.
 
-<!---
-## Contact
-
-If you have any questions or comments about this code, please contact **TODO**.
-
 ## Citation
 
-If you use this code in your research, please cite the following paper: **TODO**.
--->
+If you use this code in your research, please cite the following paper:
+
+```
+@Article{Heitmann2023,
+  author  = {Heitmann, Julien and Glangetas, Alban and Doenz, Jonathan and Dervaux, Juliane and Shama, Deeksha M. and Garcia, Daniel Hinjos and Benissa, Mohamed Rida and Cantais, Aymeric and Perez, Alexandre and M{\"u}ller, Daniel and Chavdarova, Tatjana and Ruchonnet-Metrailler, Isabelle and Siebert, Johan N. and Lacroix, Laurence and Jaggi, Martin and Gervaix, Alain and Hartley, Mary-Anne and Hugon, Florence and Fassbind, Derrick and Barro, Makura and Bediang, Georges and Hafidi, N. E. L. and Bouskraoui, M. and Ba, Idrissa and with the Pneumoscope Study Group},
+  journal = {npj Digital Medicine},
+  title   = {DeepBreath---automated detection of respiratory pathology from lung auscultation in 572 pediatric outpatients across 5 countries},
+  year    = {2023},
+  volume  = {6},
+  number  = {1},
+  pages   = {104},
+  doi     = {10.1038/s41746-023-00838-3}
+}
+```
