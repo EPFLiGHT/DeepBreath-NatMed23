@@ -1,11 +1,12 @@
 # This code was adapted from https://github.com/khornlund/pytorch-balanced-sampler/blob/master/pytorch_balanced_sampler/sampler.py
 # The original author of this code is Karl Hornlund (https://github.com/khornlund).
 
+from typing import Iterator, List, Tuple
+
 import numpy as np
-from torch.utils.data.sampler import BatchSampler, WeightedRandomSampler
 from numpy import int64, ndarray
 from pandas.core.frame import DataFrame
-from typing import Iterator, List, Tuple
+from torch.utils.data.sampler import BatchSampler, WeightedRandomSampler
 
 
 def balance_weights(weight_a: ndarray, weight_b: ndarray, alpha: float) -> ndarray:

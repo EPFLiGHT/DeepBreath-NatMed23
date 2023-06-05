@@ -2,13 +2,13 @@ from os import listdir
 from os.path import isdir, isfile, join
 from pathlib import Path
 from shutil import copy
+from typing import Dict, List, Union
 
 import numpy as np
 import pandas as pd
-from pydub import AudioSegment
 import pydub.audio_segment
 from pandas.core.frame import DataFrame
-from typing import Dict, List, Union
+from pydub import AudioSegment
 
 
 def code_with_extension(base_folder: str, code: str, extension: str) -> str:

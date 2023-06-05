@@ -1,11 +1,12 @@
+from typing import Dict
+
 import torch
 import torch.nn as nn
+from torch.nn.modules.batchnorm import BatchNorm2d
 from torchaudio.transforms import Spectrogram, MelSpectrogram, AmplitudeToDB, MFCC
 from torchlibrosa.augmentation import SpecAugmentation
 
 from .Cnn10Att import Cnn10Att
-from torch.nn.modules.batchnorm import BatchNorm2d
-from typing import Dict
 from utils.arguments import AudioArguments, ModelArguments
 
 

@@ -1,17 +1,20 @@
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import librosa
 import librosa.display
 import numpy as np
-from scipy import signal
 from numpy import ndarray
-from typing import Any, Dict, List, Tuple, Union
+from scipy import signal
 
 
-def read_audio(filename, offset=0.0, duration=None):
+def read_audio(filename: str, offset: float = 0.0, duration: Optional[float] = None):
     samples, sr = librosa.load(filename, sr=None, offset=offset, duration=duration)
     return samples
 
 
-def get_duration(samples, config):
+def get_duration(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     duration = librosa.get_duration(y=samples, sr=config["sr"])
     return duration
 
@@ -56,7 +59,7 @@ def highpass_filter(
 
 
 # Bandpass filter
-def butter_bandpass(config):
+def butter_bandpass(config: Dict[str, Union[int, float, List[str], str, bool]]):
     nyq = 0.5 * config["sr"]
     low = config["freq_lowcut"] / nyq
     high = config["freq_highcut"] / nyq
@@ -66,7 +69,9 @@ def butter_bandpass(config):
     return b, a
 
 
-def bandpass_filter(samples, config):
+def bandpass_filter(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     b, a = butter_bandpass(config)
     samples_filtered = signal.lfilter(b, a, samples)
     return samples_filtered
@@ -75,7 +80,9 @@ def bandpass_filter(samples, config):
 # ---------- Audio Features ---------- #
 
 
-def compute_stft(samples, config):
+def compute_stft(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     stft = librosa.stft(
         samples,
         n_fft=config["n_fft"],
@@ -87,7 +94,9 @@ def compute_stft(samples, config):
     return S
 
 
-def compute_stft_windowed(samples, config):
+def compute_stft_windowed(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     S = compute_stft(samples, config)
 
     res = config["sr"] / (2 * S.shape[0])
@@ -99,7 +108,9 @@ def compute_stft_windowed(samples, config):
     return S
 
 
-def compute_mel_spectrogram(samples, config):
+def compute_mel_spectrogram(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     melspect = librosa.feature.melspectrogram(
         y=samples,
         sr=config["sr"],
@@ -118,13 +129,17 @@ def log_spectrogram(spectrogram, ref=1.0):
     return logspect
 
 
-def compute_logmel(samples, config):
+def compute_logmel(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     melspect = compute_mel_spectrogram(samples, config)
     logmel = log_spectrogram(melspect)
     return logmel
 
 
-def compute_mfcc(samples, config):
+def compute_mfcc(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     mfccs = librosa.feature.mfcc(
         y=samples,
         sr=config["sr"],
@@ -144,25 +159,33 @@ def mfcc_delta(mfccs, order):
     return delta
 
 
-def compute_delta1(samples, config):
+def compute_delta1(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     mfccs = compute_mfcc(samples, config=config)
     delta1 = mfcc_delta(mfccs, 1)
     return delta1
 
 
-def compute_delta2(samples, config):
+def compute_delta2(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     mfccs = compute_mfcc(samples, config=config)
     delta2 = mfcc_delta(mfccs, 2)
     return delta2
 
 
-def compute_zcr(samples, config):
+def compute_zcr(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     return librosa.feature.zero_crossing_rate(
         y=samples, frame_length=config["n_fft"], hop_length=config["hop_length"]
     )
 
 
-def compute_spectral_centroid(samples, config):
+def compute_spectral_centroid(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     return librosa.feature.spectral_centroid(
         y=samples,
         sr=config["sr"],
@@ -171,7 +194,9 @@ def compute_spectral_centroid(samples, config):
     )
 
 
-def compute_spectral_rolloff(samples, config):
+def compute_spectral_rolloff(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+):
     return librosa.feature.spectral_rolloff(
         y=samples,
         sr=config["sr"],

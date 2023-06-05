@@ -1,12 +1,13 @@
 import dataclasses
+from typing import Dict, List
+
 import numpy as np
 import torch
+from numpy import ndarray
+from pandas.core.frame import DataFrame
 from torch.utils.data import Dataset
 
 from preprocessing.features import AudioFeatures
-from numpy import ndarray
-from pandas.core.frame import DataFrame
-from typing import Dict, List
 from utils.arguments import AudioArguments
 
 

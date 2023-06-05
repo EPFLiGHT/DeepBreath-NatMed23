@@ -1,30 +1,24 @@
 import os
 from pathlib import Path
+from typing import Any, Iterator, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
+from numpy import ndarray
+from pandas.core.frame import DataFrame
+from torch.nn.modules.loss import BCELoss
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from data.dataset import AudioDataset
 from data.sampler import BalancedSampler
 from models.SampleModel import SampleModel
-from utils.helpers import get_model_file, get_output_file, get_attention_file
-import torch.utils.data.dataloader
-from nn.modules.loss import BCELoss
-from numpy import ndarray
-from optim.adamw import AdamW
-from pandas.core.frame import DataFrame
-from torch.nn.modules.loss import BCELoss
-from torch.optim.adamw import AdamW
-from typing import Any, Iterator, Tuple
 from utils.arguments import AudioArguments, ModelArguments, TrainingArguments
-from utils.data.dataloader import DataLoader
+from utils.helpers import get_model_file, get_output_file, get_attention_file
 
 
-def make_sample_loader(
-    ds: AudioDataset, train_args: TrainingArguments
-) -> torch.utils.data.dataloader.DataLoader:
+def make_sample_loader(ds: AudioDataset, train_args: TrainingArguments) -> DataLoader:
     batch_size = train_args.batch_size
 
     if train_args.balanced_sampling:
@@ -46,7 +40,7 @@ def make_sample_loader(
     return data_loader
 
 
-def make_optimizer(params: Iterator[Any], train_args: TrainingArguments) -> AdamW:
+def make_optimizer(params: Iterator[Any], train_args: TrainingArguments) -> Optimizer:
     if train_args.optimizer_name == "sgd":
         optimizer = torch.optim.SGD(
             params=params,
@@ -130,7 +124,7 @@ def make_sample_model(
 
 def make_features(
     samples_df: DataFrame,
-    data_loader: torch.utils.data.dataloader.DataLoader,
+    data_loader: DataLoader,
     val_fold: int,
     test_fold: int,
     audio_args: AudioArguments,
