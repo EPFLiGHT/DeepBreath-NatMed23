@@ -3,10 +3,9 @@ from pathlib import Path
 from typing import Any, Iterator, Tuple
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
-from numpy import ndarray
-from pandas.core.frame import DataFrame
 from torch.nn.modules.loss import BCELoss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -70,15 +69,15 @@ def make_loss() -> BCELoss:
 
 
 def make_sample_model(
-    samples_df: DataFrame,
-    data: ndarray,
+    samples_df: pd.DataFrame,
+    data: np.ndarray,
     fold_1: int,
     fold_2: int,
     audio_args: AudioArguments,
     model_args: ModelArguments,
     train_args: TrainingArguments,
     device: torch.device,
-) -> Tuple[SampleModel, DataLoader, DataLoader, DataLoader, AdamW, BCELoss]:
+) -> Tuple[SampleModel, DataLoader, DataLoader, DataLoader, Optimizer, BCELoss]:
     loc_selection = (samples_df.location.isin(train_args.train_loc)).values
     samples_df = samples_df[loc_selection].reset_index(drop=True)
     data = data[loc_selection]
@@ -123,7 +122,7 @@ def make_sample_model(
 
 
 def make_features(
-    samples_df: DataFrame,
+    samples_df: pd.DataFrame,
     data_loader: DataLoader,
     val_fold: int,
     test_fold: int,
@@ -131,7 +130,7 @@ def make_features(
     model_args: ModelArguments,
     train_args: TrainingArguments,
     device: torch.device,
-) -> ndarray:
+) -> np.ndarray:
     outputs = np.zeros(len(samples_df))
     model_name = model_args.model_name
     target_str = "+".join([str(t) for t in train_args.target])

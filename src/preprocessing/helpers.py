@@ -7,7 +7,6 @@ from typing import Dict, List, Union
 import numpy as np
 import pandas as pd
 import pydub.audio_segment
-from pandas.core.frame import DataFrame
 from pydub import AudioSegment
 
 
@@ -48,7 +47,7 @@ def prepare_data(
     db_columns: List[str] = ["patient", "diagnosis", "new_diagnosis"],
     out_path: str = "../data/interim",
     n_splits: int = 5,
-) -> DataFrame:
+) -> pd.DataFrame:
     patient_df = []
     for project, locations in project_locations.items():
         for location in locations:

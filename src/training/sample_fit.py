@@ -1,9 +1,8 @@
 from typing import Dict, Optional, Tuple
 
 import numpy as np
+import pandas as pd
 import torch
-from numpy import float64
-from pandas.core.frame import DataFrame
 from scipy.stats import hmean
 from sklearn.metrics import classification_report, roc_auc_score
 from torch.nn.modules.loss import BCELoss
@@ -15,8 +14,8 @@ from models.SampleModel import SampleModel
 
 
 def classification_metrics(
-    samples_df: DataFrame, position_df: DataFrame, verbose: bool = True
-) -> Tuple[Dict[str, float], Dict[str, float64]]:
+    samples_df: pd.DataFrame, position_df: pd.DataFrame, verbose: bool = True
+) -> Tuple[Dict[str, float], Dict[str, float]]:
     str_labels = sorted([str(t) for t in position_df.label.unique()])
     target = position_df[position_df.label == 1].diagnosis.unique()
     diag_count = position_df.groupby("diagnosis").size()
@@ -165,7 +164,7 @@ def train_epoch(
 
 def evaluate(
     model: SampleModel, val_loader: DataLoader, criterion: BCELoss, device: torch.device
-) -> Tuple[Dict[str, float], Dict[str, float64]]:
+) -> Tuple[Dict[str, float], Dict[str, float]]:
     model.eval()
 
     val_loss = 0

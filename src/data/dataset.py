@@ -2,9 +2,8 @@ import dataclasses
 from typing import Dict, List
 
 import numpy as np
+import pandas as pd
 import torch
-from numpy import ndarray
-from pandas.core.frame import DataFrame
 from torch.utils.data import Dataset
 
 from preprocessing.features import AudioFeatures
@@ -14,9 +13,9 @@ from utils.arguments import AudioArguments
 class AudioDataset(Dataset):
     def __init__(
         self,
-        samples_df: DataFrame,
+        samples_df: pd.DataFrame,
         target: List[int],
-        data: ndarray,
+        data: np.ndarray,
         audio_args: AudioArguments,
         train: bool = True,
     ) -> None:
@@ -46,7 +45,7 @@ class AudioDataset(Dataset):
     def samples_df(self, df):
         self._samples_df = df
 
-    def _preprocess_data(self, data: ndarray) -> ndarray:
+    def _preprocess_data(self, data: np.ndarray) -> np.ndarray:
         filters = AudioFeatures(features=[], config=dataclasses.asdict(self.audio_args))
         preprocessed_data = np.zeros(data.shape)
         for i, n_samples in enumerate(self.samples_df.end.values):

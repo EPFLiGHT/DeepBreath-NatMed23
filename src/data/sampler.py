@@ -1,15 +1,16 @@
 # This code was adapted from https://github.com/khornlund/pytorch-balanced-sampler/blob/master/pytorch_balanced_sampler/sampler.py
 # The original author of this code is Karl Hornlund (https://github.com/khornlund).
 
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Optional, Tuple
 
 import numpy as np
-from numpy import int64, ndarray
-from pandas.core.frame import DataFrame
+import pandas as pd
 from torch.utils.data.sampler import BatchSampler, WeightedRandomSampler
 
 
-def balance_weights(weight_a: ndarray, weight_b: ndarray, alpha: float) -> ndarray:
+def balance_weights(
+    weight_a: np.ndarray, weight_b: np.ndarray, alpha: float
+) -> np.ndarray:
     assert 0 <= alpha <= 1, f"invalid alpha {alpha}, must be 0 <= alpha <= 1"
 
     beta = 1 - alpha
@@ -21,7 +22,7 @@ def balance_weights(weight_a: ndarray, weight_b: ndarray, alpha: float) -> ndarr
 class BalancedSampler:
     def __init__(
         self,
-        df: DataFrame,
+        df: pd.DataFrame,
         pos_label: List[int],
         label_col: str = "diagnosis",
         additional_cols: List[str] = [],
@@ -46,7 +47,7 @@ class BalancedSampler:
 
     def _weight_classes(
         self, class_idxs: List[List[int]], alpha: float
-    ) -> Tuple[ndarray, ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray]:
         class_sizes = np.asarray([len(idxs) for idxs in class_idxs])
 
         original_weights = self.grouped_samples.original_weight.values
@@ -57,7 +58,7 @@ class BalancedSampler:
         return class_sizes, weights
 
     def get_sampler(
-        self, batch_size: int, n_batches: None = None, alpha: float = 0.5
+        self, batch_size: int, n_batches: Optional[int] = None, alpha: float = 0.5
     ) -> "WeightedRandomBatchSampler":
         n_samples = self.grouped_samples["size"].sum()
         class_idxs = self.grouped_samples["list"].values.tolist()
@@ -85,10 +86,10 @@ class BalancedSampler:
 class WeightedRandomBatchSampler(BatchSampler):
     def __init__(
         self,
-        class_weights: ndarray,
+        class_weights: np.ndarray,
         class_idxs: List[List[int]],
         batch_size: int,
-        n_batches: int64,
+        n_batches: int,
     ) -> None:
         self.sample_idxs = []
         for idxs in class_idxs:
@@ -110,5 +111,5 @@ class WeightedRandomBatchSampler(BatchSampler):
                 selected.append(self.sample_idxs[idx])
             yield selected
 
-    def __len__(self) -> int64:
+    def __len__(self) -> int:
         return self.n_batches
