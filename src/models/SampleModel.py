@@ -79,7 +79,7 @@ class AudioFrontend(nn.Module):
     def n_feats(self, val):
         self._n_feats = val
 
-    def forward(self, x:     torch.Tensor) ->     torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Input: (batch_size, data_length)"""
 
@@ -94,7 +94,9 @@ def init_bn(bn: BatchNorm2d) -> None:
 
 
 class SampleModel(nn.Module):
-    def __init__(self, audio_config: AudioArguments, model_config: ModelArguments) -> None:
+    def __init__(
+        self, audio_config: AudioArguments, model_config: ModelArguments
+    ) -> None:
         super(SampleModel, self).__init__()
 
         self.audio_frontend = AudioFrontend(config=audio_config)
@@ -118,7 +120,7 @@ class SampleModel(nn.Module):
     def init_weight(self) -> None:
         init_bn(self.bn)
 
-    def preprocess(self, x:     torch.Tensor) ->     torch.Tensor:
+    def preprocess(self, x: torch.Tensor) -> torch.Tensor:
         # 1. Audio Frontend: Convert Audio to Image
         if hasattr(self, "audio_frontend"):
             x = self.audio_frontend(x)
@@ -136,7 +138,7 @@ class SampleModel(nn.Module):
 
         return x
 
-    def forward(self, x:     torch.Tensor) -> Dict[str,     torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
         # Audio Preprocessing
         x = self.preprocess(x)
 

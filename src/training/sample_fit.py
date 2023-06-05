@@ -12,7 +12,9 @@ from torch.utils.data.dataloader import DataLoader
 from typing import Dict, Optional, Tuple
 
 
-def classification_metrics(samples_df: DataFrame, position_df: DataFrame, verbose: bool=True) -> Tuple[Dict[str, float], Dict[str, float64]]:
+def classification_metrics(
+    samples_df: DataFrame, position_df: DataFrame, verbose: bool = True
+) -> Tuple[Dict[str, float], Dict[str, float64]]:
     str_labels = sorted([str(t) for t in position_df.label.unique()])
     target = position_df[position_df.label == 1].diagnosis.unique()
     diag_count = position_df.groupby("diagnosis").size()
@@ -117,8 +119,8 @@ def train_epoch(
     criterion: BCELoss,
     epoch: int,
     device: torch.device,
-    scheduler: Optional[OneCycleLR]=None,
-    log_interval: int=10,
+    scheduler: Optional[OneCycleLR] = None,
+    log_interval: int = 10,
 ) -> float:
     model.train()
 
@@ -159,7 +161,9 @@ def train_epoch(
     return train_loss
 
 
-def evaluate(model: SampleModel, val_loader: DataLoader, criterion: BCELoss, device: torch.device) -> Tuple[Dict[str, float], Dict[str, float64]]:
+def evaluate(
+    model: SampleModel, val_loader: DataLoader, criterion: BCELoss, device: torch.device
+) -> Tuple[Dict[str, float], Dict[str, float64]]:
     model.eval()
 
     val_loss = 0

@@ -17,7 +17,7 @@ class AudioDataset(Dataset):
         target: List[int],
         data: ndarray,
         audio_args: AudioArguments,
-        train: bool=True,
+        train: bool = True,
     ) -> None:
         self.audio_args = audio_args
 
@@ -61,7 +61,7 @@ class AudioDataset(Dataset):
     def __len__(self) -> int:
         return len(self.samples_df)
 
-    def __getitem__(self, i: int) -> Dict[str,     torch.Tensor]:
+    def __getitem__(self, i: int) -> Dict[str, torch.Tensor]:
         y = np.array([self.samples_df["label"].values[i]]).astype(np.float32)
 
         sample_length = int(self.audio_args.sr * self.audio_args.split_duration)

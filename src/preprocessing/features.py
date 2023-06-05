@@ -20,28 +20,36 @@ def get_duration(samples, config):
 
 
 # Lowpass filter
-def butter_lowpass(config: Dict[str, Union[int, float, List[str], str, bool]]) -> Tuple[ndarray, ndarray]:
+def butter_lowpass(
+    config: Dict[str, Union[int, float, List[str], str, bool]]
+) -> Tuple[ndarray, ndarray]:
     nyq = 0.5 * config["sr"]
     low = config["freq_lowcut"] / nyq
     b, a = signal.butter(config["order_lowcut"], low, btype="low")
     return b, a
 
 
-def lowpass_filter(samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]) -> ndarray:
+def lowpass_filter(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+) -> ndarray:
     b, a = butter_lowpass(config)
     samples_filtered = signal.lfilter(b, a, samples)
     return samples_filtered
 
 
 # Highpass filter
-def butter_highpass(config: Dict[str, Union[int, float, List[str], str, bool]]) -> Tuple[ndarray, ndarray]:
+def butter_highpass(
+    config: Dict[str, Union[int, float, List[str], str, bool]]
+) -> Tuple[ndarray, ndarray]:
     nyq = 0.5 * config["sr"]
     high = config["freq_highcut"] / nyq
     b, a = signal.butter(config["order_highcut"], high, btype="high")
     return b, a
 
 
-def highpass_filter(samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]) -> ndarray:
+def highpass_filter(
+    samples: ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
+) -> ndarray:
     b, a = butter_highpass(config)
     samples_filtered = signal.lfilter(b, a, samples)
     return samples_filtered
@@ -195,7 +203,11 @@ feature_fcts = {
 
 
 class AudioFeatures:
-    def __init__(self, features: List[Any], config: Dict[str, Union[int, float, List[str], str, bool]]) -> None:
+    def __init__(
+        self,
+        features: List[Any],
+        config: Dict[str, Union[int, float, List[str], str, bool]],
+    ) -> None:
         for pre in config["preprocessing"]:
             assert pre in preprocessing_fcts.keys()
         for feat in features:
@@ -205,7 +217,7 @@ class AudioFeatures:
         self.features = features
         self.config = config
 
-    def transform(self, samples: ndarray, time_first: bool=False) -> ndarray:
+    def transform(self, samples: ndarray, time_first: bool = False) -> ndarray:
         x = samples
         for pre in self.preprocessing:
             x = preprocessing_fcts[pre](x, config=self.config)

@@ -22,7 +22,9 @@ from utils.arguments import AudioArguments, ModelArguments, TrainingArguments
 from utils.data.dataloader import DataLoader
 
 
-def make_sample_loader(ds: AudioDataset, train_args: TrainingArguments) -> torch.utils.data.dataloader.DataLoader:
+def make_sample_loader(
+    ds: AudioDataset, train_args: TrainingArguments
+) -> torch.utils.data.dataloader.DataLoader:
     batch_size = train_args.batch_size
 
     if train_args.balanced_sampling:
@@ -74,7 +76,14 @@ def make_loss() -> BCELoss:
 
 
 def make_sample_model(
-    samples_df: DataFrame, data: ndarray, fold_1: int, fold_2: int, audio_args: AudioArguments, model_args: ModelArguments, train_args: TrainingArguments, device: torch.device
+    samples_df: DataFrame,
+    data: ndarray,
+    fold_1: int,
+    fold_2: int,
+    audio_args: AudioArguments,
+    model_args: ModelArguments,
+    train_args: TrainingArguments,
+    device: torch.device,
 ) -> Tuple[SampleModel, DataLoader, DataLoader, DataLoader, AdamW, BCELoss]:
     loc_selection = (samples_df.location.isin(train_args.train_loc)).values
     samples_df = samples_df[loc_selection].reset_index(drop=True)
@@ -129,7 +138,6 @@ def make_features(
     train_args: TrainingArguments,
     device: torch.device,
 ) -> ndarray:
-
     outputs = np.zeros(len(samples_df))
     model_name = model_args.model_name
     target_str = "+".join([str(t) for t in train_args.target])

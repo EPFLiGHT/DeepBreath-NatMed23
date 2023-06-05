@@ -40,7 +40,9 @@ def interpolate(x: torch.Tensor, ratio: int) -> torch.Tensor:
     return upsampled
 
 
-def pad_framewise_output(framewise_output: torch.Tensor, frames_num: int) -> torch.Tensor:
+def pad_framewise_output(
+    framewise_output: torch.Tensor, frames_num: int
+) -> torch.Tensor:
     """Pad framewise_output to the same length as input frames. The pad value
     is the same as the value of the last frame.
     Args:
@@ -93,7 +95,12 @@ class ConvBlock(nn.Module):
         init_bn(self.bn1)
         init_bn(self.bn2)
 
-    def forward(self, input:     torch.Tensor, pool_size: Tuple[int, int]=(2, 2), pool_type: str="avg") ->     torch.Tensor:
+    def forward(
+        self,
+        input: torch.Tensor,
+        pool_size: Tuple[int, int] = (2, 2),
+        pool_type: str = "avg",
+    ) -> torch.Tensor:
         x = input
         x = F.relu_(self.bn1(self.conv1(x)))
         x = F.relu_(self.bn2(self.conv2(x)))
@@ -113,7 +120,11 @@ class ConvBlock(nn.Module):
 
 class AttBlock(nn.Module):
     def __init__(
-        self, in_features: int, out_features: int, activation: str="linear", temperature: float=1.0
+        self,
+        in_features: int,
+        out_features: int,
+        activation: str = "linear",
+        temperature: float = 1.0,
     ) -> None:
         super().__init__()
 
@@ -144,14 +155,16 @@ class AttBlock(nn.Module):
         init_layer(self.cla)
         init_bn(self.bn_att)
 
-    def forward(self, x:     torch.Tensor) -> Tuple[    torch.Tensor,     torch.Tensor,     torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         # x: (n_samples, n_in, n_time)
         norm_att = torch.softmax(torch.tanh(self.att(x)), dim=-1)
         cla = self.nonlinear_transform(self.cla(x))
         x = torch.sum(norm_att * cla, dim=2)
         return x, norm_att, cla
 
-    def nonlinear_transform(self, x:     torch.Tensor) ->     torch.Tensor:
+    def nonlinear_transform(self, x: torch.Tensor) -> torch.Tensor:
         if self.activation == "linear":
             return x
         elif self.activation == "sigmoid":
@@ -180,7 +193,7 @@ class Cnn10Att(nn.Module):
     def init_weight(self) -> None:
         init_layer(self.fc1)
 
-    def cnn_feature_extractor(self, x:     torch.Tensor) ->     torch.Tensor:
+    def cnn_feature_extractor(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv_block1(x, pool_size=(2, 2), pool_type="avg")
         x = F.dropout(x, p=0.2, training=self.training)
         x = self.conv_block2(x, pool_size=(2, 2), pool_type="avg")
@@ -193,7 +206,9 @@ class Cnn10Att(nn.Module):
         x = F.dropout(x, p=0.2, training=self.training)
         return x
 
-    def forward(self, x:     torch.Tensor) -> Dict[str,     torch.Tensor]:  # input, mixup_lambda=None
+    def forward(
+        self, x: torch.Tensor
+    ) -> Dict[str, torch.Tensor]:  # input, mixup_lambda=None
         """
         Input: (0: batch size, 1: channels, 2: time, 3: frequency)"""
 

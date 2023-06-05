@@ -18,7 +18,13 @@ def balance_weights(weight_a: ndarray, weight_b: ndarray, alpha: float) -> ndarr
 
 
 class BalancedSampler:
-    def __init__(self, df: DataFrame, pos_label: List[int], label_col: str="diagnosis", additional_cols: List[str]=[]) -> None:
+    def __init__(
+        self,
+        df: DataFrame,
+        pos_label: List[int],
+        label_col: str = "diagnosis",
+        additional_cols: List[str] = [],
+    ) -> None:
         by = [label_col] + additional_cols
         grouped_samples = (
             df.reset_index().groupby(by)["index"].agg(["size", list]).reset_index()
@@ -37,7 +43,9 @@ class BalancedSampler:
 
         self.grouped_samples = grouped_samples
 
-    def _weight_classes(self, class_idxs: List[List[int]], alpha: float) -> Tuple[ndarray, ndarray]:
+    def _weight_classes(
+        self, class_idxs: List[List[int]], alpha: float
+    ) -> Tuple[ndarray, ndarray]:
         class_sizes = np.asarray([len(idxs) for idxs in class_idxs])
 
         original_weights = self.grouped_samples.original_weight.values
@@ -47,7 +55,9 @@ class BalancedSampler:
 
         return class_sizes, weights
 
-    def get_sampler(self, batch_size: int, n_batches: None=None, alpha: float=0.5) -> "WeightedRandomBatchSampler":
+    def get_sampler(
+        self, batch_size: int, n_batches: None = None, alpha: float = 0.5
+    ) -> "WeightedRandomBatchSampler":
         n_samples = self.grouped_samples["size"].sum()
         class_idxs = self.grouped_samples["list"].values.tolist()
         class_sizes, weights = self._weight_classes(class_idxs, alpha)
@@ -72,7 +82,13 @@ class BalancedSampler:
 
 
 class WeightedRandomBatchSampler(BatchSampler):
-    def __init__(self, class_weights: ndarray, class_idxs: List[List[int]], batch_size: int, n_batches: int64) -> None:
+    def __init__(
+        self,
+        class_weights: ndarray,
+        class_idxs: List[List[int]],
+        batch_size: int,
+        n_batches: int64,
+    ) -> None:
         self.sample_idxs = []
         for idxs in class_idxs:
             self.sample_idxs.extend(idxs)
