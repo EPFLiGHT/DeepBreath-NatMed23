@@ -28,12 +28,12 @@ np.random.seed(SEED)  # numpy random seedimport numpy as np
 
 
 def get_samples(
-    patient_df,
-    sr,
-    max_duration,
-    interim_path,
-    audio_data_path,
-    samples_df_path,
+    patient_df: pd.DataFrame,
+    sr: float,
+    max_duration: float,
+    interim_path: str,
+    audio_data_path: str,
+    samples_df_path: str,
 ):
     sample_length = int(sr * max_duration)
 

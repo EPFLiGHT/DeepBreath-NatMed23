@@ -2,29 +2,35 @@ from os import listdir
 from os.path import isdir, isfile, join
 from pathlib import Path
 from shutil import copy
+from typing import Dict, List, Union
 
 import numpy as np
 import pandas as pd
+import pydub.audio_segment
 from pydub import AudioSegment
 
 
-def code_with_extension(base_folder, code, extension):
+def code_with_extension(base_folder: str, code: str, extension: str) -> str:
     filename = "{}.{}".format(code, extension)
     return join(base_folder, filename)
 
 
-def match_target_amplitude(sound, target_dBFS):
+def match_target_amplitude(
+    sound: pydub.audio_segment.AudioSegment, target_dBFS: float
+) -> pydub.audio_segment.AudioSegment:
     change_in_dBFS = target_dBFS - sound.dBFS
     return sound.apply_gain(change_in_dBFS)
 
 
-def normalize_and_save(file, output_file, target_dBFS=-20.0):
+def normalize_and_save(file: str, output_file: str, target_dBFS: float = -20.0) -> None:
     sound = AudioSegment.from_file(file, "wav")
     normalized_sound = match_target_amplitude(sound, target_dBFS)
     normalized_sound.export(output_file, format="wav")
 
 
-def diagnoses_to_int(diagnoses, delimiters=["+", "?"]):
+def diagnoses_to_int(
+    diagnoses: Union[str, int, float], delimiters: List[str] = ["+", "?"]
+) -> List[int]:
     if isinstance(diagnoses, str):
         for char in delimiters:
             diagnoses = diagnoses.replace(char, " ")
@@ -36,12 +42,12 @@ def diagnoses_to_int(diagnoses, delimiters=["+", "?"]):
 
 
 def prepare_data(
-    root_path,
-    project_locations,
-    db_columns=["patient", "diagnosis", "new_diagnosis"],
-    out_path="../data/interim",
-    n_splits=5,
-):
+    root_path: str,
+    project_locations: Dict[str, List[str]],
+    db_columns: List[str] = ["patient", "diagnosis", "new_diagnosis"],
+    out_path: str = "../data/interim",
+    n_splits: int = 5,
+) -> pd.DataFrame:
     patient_df = []
     for project, locations in project_locations.items():
         for location in locations:

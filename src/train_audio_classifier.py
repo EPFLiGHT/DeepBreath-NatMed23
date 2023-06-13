@@ -5,11 +5,14 @@ import random
 import sys
 from itertools import combinations
 from pathlib import Path
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
 import torch
 import wandb
+from torch.nn.modules.loss import BCELoss
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from transformers import HfArgumentParser
 
@@ -17,6 +20,7 @@ from transformers import HfArgumentParser
 import training.pipeline as pipeline
 import training.sample_fit as sample_fit
 from data.dataset import AudioDataset
+from models.SampleModel import SampleModel
 from utils.arguments import (
     DataArguments,
     AudioArguments,
@@ -48,7 +52,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 wandb.login()
 
 
-def load_data(data_args, train_args):
+def load_data(
+    data_args: DataArguments, train_args: TrainingArguments
+) -> Tuple[pd.DataFrame, np.ndarray]:
     samples_df_path = os.path.join(data_args.processed_path, SAMPLES_DF_FILE)
     audio_data_path = os.path.join(data_args.processed_path, AUDIO_DATA_FILE)
 
@@ -83,17 +89,17 @@ def load_data(data_args, train_args):
 
 
 def evaluate_and_save(
-    model,
-    loader_1,
-    loader_2,
-    fold_1,
-    fold_2,
-    criterion,
-    best_score,
-    model_args,
-    train_args,
-    val_first=True,
-):
+    model: SampleModel,
+    loader_1: DataLoader,
+    loader_2: DataLoader,
+    fold_1: int,
+    fold_2: int,
+    criterion: BCELoss,
+    best_score: float,
+    model_args: ModelArguments,
+    train_args: TrainingArguments,
+    val_first: bool = True,
+) -> Tuple[Dict[str, float], float]:
     if val_first:
         val_loader = loader_1
         val_fold = fold_1
@@ -123,18 +129,18 @@ def evaluate_and_save(
 
 
 def fit_samples(
-    model,
-    train_loader,
-    loader_1,
-    loader_2,
-    fold_1,
-    fold_2,
-    optimizer,
-    criterion,
-    cv_index,
-    model_args,
-    train_args,
-):
+    model: SampleModel,
+    train_loader: DataLoader,
+    loader_1: DataLoader,
+    loader_2: DataLoader,
+    fold_1: int,
+    fold_2: int,
+    optimizer: Optimizer,
+    criterion: BCELoss,
+    cv_index: int,
+    model_args: ModelArguments,
+    train_args: TrainingArguments,
+) -> None:
     best_score_1 = 0
     best_score_2 = 0
 
@@ -197,14 +203,14 @@ def fit_samples(
 
 
 def position_aggregation(
-    samples_df,
-    data_loader,
-    val_fold,
-    test_fold,
-    audio_args,
-    model_args,
-    train_args,
-):
+    samples_df: pd.DataFrame,
+    data_loader: DataLoader,
+    val_fold: int,
+    test_fold: int,
+    audio_args: AudioArguments,
+    model_args: ModelArguments,
+    train_args: TrainingArguments,
+) -> None:
     # Get sample features
     target = train_args.target
     target_str = "+".join([str(t) for t in target])
@@ -235,15 +241,15 @@ def position_aggregation(
 
 
 def model_pipeline(
-    samples_df,
-    data,
-    fold_1,
-    fold_2,
-    cv_index,
-    audio_args,
-    model_args,
-    train_args,
-):
+    samples_df: pd.DataFrame,
+    data: np.ndarray,
+    fold_1: int,
+    fold_2: int,
+    cv_index: int,
+    audio_args: AudioArguments,
+    model_args: ModelArguments,
+    train_args: TrainingArguments,
+) -> None:
     (
         model,
         train_loader,
@@ -300,7 +306,7 @@ def model_pipeline(
     )
 
 
-def main():
+def main() -> None:
     parser = HfArgumentParser(
         (DataArguments, AudioArguments, ModelArguments, TrainingArguments)
     )

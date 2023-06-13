@@ -1,16 +1,20 @@
+from typing import Dict
+
 import torch
 import torch.nn as nn
+from torch.nn.modules.batchnorm import BatchNorm2d
 from torchaudio.transforms import Spectrogram, MelSpectrogram, AmplitudeToDB, MFCC
 from torchlibrosa.augmentation import SpecAugmentation
 
 from .Cnn10Att import Cnn10Att
+from utils.arguments import AudioArguments, ModelArguments
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class AudioFrontend(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config: AudioArguments) -> None:
         super(AudioFrontend, self).__init__()
 
         self.config = config
@@ -76,7 +80,7 @@ class AudioFrontend(nn.Module):
     def n_feats(self, val):
         self._n_feats = val
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Input: (batch_size, data_length)"""
 
@@ -84,14 +88,16 @@ class AudioFrontend(nn.Module):
         return out
 
 
-def init_bn(bn):
+def init_bn(bn: BatchNorm2d) -> None:
     """Initialize a Batchnorm layer."""
     bn.bias.data.fill_(0.0)
     bn.weight.data.fill_(1.0)
 
 
 class SampleModel(nn.Module):
-    def __init__(self, audio_config, model_config):
+    def __init__(
+        self, audio_config: AudioArguments, model_config: ModelArguments
+    ) -> None:
         super(SampleModel, self).__init__()
 
         self.audio_frontend = AudioFrontend(config=audio_config)
@@ -112,10 +118,10 @@ class SampleModel(nn.Module):
 
         self.init_weight()
 
-    def init_weight(self):
+    def init_weight(self) -> None:
         init_bn(self.bn)
 
-    def preprocess(self, x):
+    def preprocess(self, x: torch.Tensor) -> torch.Tensor:
         # 1. Audio Frontend: Convert Audio to Image
         if hasattr(self, "audio_frontend"):
             x = self.audio_frontend(x)
@@ -133,7 +139,7 @@ class SampleModel(nn.Module):
 
         return x
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
         # Audio Preprocessing
         x = self.preprocess(x)
 

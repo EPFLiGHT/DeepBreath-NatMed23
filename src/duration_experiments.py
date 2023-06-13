@@ -5,6 +5,7 @@ import random
 import sys
 from itertools import combinations
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -44,7 +45,9 @@ torch.backends.cudnn.deterministic = True
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def load_data(data_args, train_args):
+def load_data(
+    data_args: DataArguments, train_args: TrainingArguments
+) -> Tuple[pd.DataFrame, np.ndarray]:
     samples_df_path = os.path.join(data_args.processed_path, SAMPLES_DF_FILE)
     audio_data_path = os.path.join(data_args.processed_path, AUDIO_DATA_FILE)
 
@@ -79,14 +82,14 @@ def load_data(data_args, train_args):
 
 
 def position_aggregation(
-    samples_df,
-    data_loader,
-    val_fold,
-    test_fold,
-    audio_args,
-    model_args,
-    train_args,
-):
+    samples_df: pd.DataFrame,
+    data_loader: DataLoader,
+    val_fold: int,
+    test_fold: int,
+    audio_args: AudioArguments,
+    model_args: ModelArguments,
+    train_args: TrainingArguments,
+) -> None:
     # Get sample features
     target = train_args.target
     target_str = "+".join([str(t) for t in target])
@@ -119,15 +122,15 @@ def position_aggregation(
 
 
 def model_pipeline(
-    samples_df,
-    data,
-    fold_1,
-    fold_2,
-    cv_index,
-    audio_args,
-    model_args,
-    train_args,
-):
+    samples_df: pd.DataFrame,
+    data: np.ndarray,
+    fold_1: int,
+    fold_2: int,
+    cv_index: int,
+    audio_args: AudioArguments,
+    model_args: ModelArguments,
+    train_args: TrainingArguments,
+) -> None:
     ds = AudioDataset(
         samples_df,
         target=train_args.target,
@@ -158,7 +161,7 @@ def model_pipeline(
     )
 
 
-def main():
+def main() -> None:
     parser = HfArgumentParser(
         (DataArguments, AudioArguments, ModelArguments, TrainingArguments)
     )
