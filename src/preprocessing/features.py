@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import librosa
 import librosa.display
@@ -11,9 +11,7 @@ def read_audio(filename: str, offset: float = 0.0, duration: Optional[float] = N
     return samples
 
 
-def get_duration(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def get_duration(samples: np.ndarray, config: Dict[str, Any]):
     duration = librosa.get_duration(y=samples, sr=config["sr"])
     return duration
 
@@ -22,43 +20,35 @@ def get_duration(
 
 
 # Lowpass filter
-def butter_lowpass(
-    config: Dict[str, Union[int, float, List[str], str, bool]]
-) -> Tuple[np.ndarray, np.ndarray]:
+def butter_lowpass(config: Dict[str, Any]) -> Tuple[np.ndarray, np.ndarray]:
     nyq = 0.5 * config["sr"]
     low = config["freq_lowcut"] / nyq
     b, a = signal.butter(config["order_lowcut"], low, btype="low")
     return b, a
 
 
-def lowpass_filter(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-) -> np.ndarray:
+def lowpass_filter(samples: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
     b, a = butter_lowpass(config)
     samples_filtered = signal.lfilter(b, a, samples)
     return samples_filtered
 
 
 # Highpass filter
-def butter_highpass(
-    config: Dict[str, Union[int, float, List[str], str, bool]]
-) -> Tuple[np.ndarray, np.ndarray]:
+def butter_highpass(config: Dict[str, Any]) -> Tuple[np.ndarray, np.ndarray]:
     nyq = 0.5 * config["sr"]
     high = config["freq_highcut"] / nyq
     b, a = signal.butter(config["order_highcut"], high, btype="high")
     return b, a
 
 
-def highpass_filter(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-) -> np.ndarray:
+def highpass_filter(samples: np.ndarray, config: Dict[str, Any]) -> np.ndarray:
     b, a = butter_highpass(config)
     samples_filtered = signal.lfilter(b, a, samples)
     return samples_filtered
 
 
 # Bandpass filter
-def butter_bandpass(config: Dict[str, Union[int, float, List[str], str, bool]]):
+def butter_bandpass(config: Dict[str, Any]):
     nyq = 0.5 * config["sr"]
     low = config["freq_lowcut"] / nyq
     high = config["freq_highcut"] / nyq
@@ -68,9 +58,7 @@ def butter_bandpass(config: Dict[str, Union[int, float, List[str], str, bool]]):
     return b, a
 
 
-def bandpass_filter(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def bandpass_filter(samples: np.ndarray, config: Dict[str, Any]):
     b, a = butter_bandpass(config)
     samples_filtered = signal.lfilter(b, a, samples)
     return samples_filtered
@@ -79,9 +67,7 @@ def bandpass_filter(
 # ---------- Audio Features ---------- #
 
 
-def compute_stft(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def compute_stft(samples: np.ndarray, config: Dict[str, Any]):
     stft = librosa.stft(
         samples,
         n_fft=config["n_fft"],
@@ -93,9 +79,7 @@ def compute_stft(
     return S
 
 
-def compute_stft_windowed(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def compute_stft_windowed(samples: np.ndarray, config: Dict[str, Any]):
     S = compute_stft(samples, config)
 
     res = config["sr"] / (2 * S.shape[0])
@@ -107,9 +91,7 @@ def compute_stft_windowed(
     return S
 
 
-def compute_mel_spectrogram(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def compute_mel_spectrogram(samples: np.ndarray, config: Dict[str, Any]):
     melspect = librosa.feature.melspectrogram(
         y=samples,
         sr=config["sr"],
@@ -128,17 +110,13 @@ def log_spectrogram(spectrogram, ref=1.0):
     return logspect
 
 
-def compute_logmel(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def compute_logmel(samples: np.ndarray, config: Dict[str, Any]):
     melspect = compute_mel_spectrogram(samples, config)
     logmel = log_spectrogram(melspect)
     return logmel
 
 
-def compute_mfcc(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def compute_mfcc(samples: np.ndarray, config: Dict[str, Any]):
     mfccs = librosa.feature.mfcc(
         y=samples,
         sr=config["sr"],
@@ -158,33 +136,25 @@ def mfcc_delta(mfccs, order):
     return delta
 
 
-def compute_delta1(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def compute_delta1(samples: np.ndarray, config: Dict[str, Any]):
     mfccs = compute_mfcc(samples, config=config)
     delta1 = mfcc_delta(mfccs, 1)
     return delta1
 
 
-def compute_delta2(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def compute_delta2(samples: np.ndarray, config: Dict[str, Any]):
     mfccs = compute_mfcc(samples, config=config)
     delta2 = mfcc_delta(mfccs, 2)
     return delta2
 
 
-def compute_zcr(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def compute_zcr(samples: np.ndarray, config: Dict[str, Any]):
     return librosa.feature.zero_crossing_rate(
         y=samples, frame_length=config["n_fft"], hop_length=config["hop_length"]
     )
 
 
-def compute_spectral_centroid(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def compute_spectral_centroid(samples: np.ndarray, config: Dict[str, Any]):
     return librosa.feature.spectral_centroid(
         y=samples,
         sr=config["sr"],
@@ -193,9 +163,7 @@ def compute_spectral_centroid(
     )
 
 
-def compute_spectral_rolloff(
-    samples: np.ndarray, config: Dict[str, Union[int, float, List[str], str, bool]]
-):
+def compute_spectral_rolloff(samples: np.ndarray, config: Dict[str, Any]):
     return librosa.feature.spectral_rolloff(
         y=samples,
         sr=config["sr"],
@@ -230,7 +198,7 @@ class AudioFeatures:
     def __init__(
         self,
         features: List[Any],
-        config: Dict[str, Union[int, float, List[str], str, bool]],
+        config: Dict[str, Any],
     ) -> None:
         for pre in config["preprocessing"]:
             assert pre in preprocessing_fcts.keys()
