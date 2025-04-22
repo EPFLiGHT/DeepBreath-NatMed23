@@ -11,5 +11,5 @@ statsmodels==0.13.5
 torch==2.6.0
 torchaudio==0.13.1
 torchlibrosa==0.1.0
-transformers==4.27.4
+transformers==4.48.0
 wandb==0.14.0
