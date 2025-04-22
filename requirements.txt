@@ -1,4 +1,4 @@
-jupyterlab==3.6.2
+jupyterlab==3.6.8
 librosa==0.10.0
 matplotlib==3.5.3
 numpy==1.21.6
